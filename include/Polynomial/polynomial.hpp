@@ -2,10 +2,10 @@
 #define POLYNOMIAL_HPP
 
 #include <map>
-#include <memory>
 #include "monomial.hpp"
 #include "monomial_order.hpp"
 #include "term.hpp"
+#include "modint.hpp"
 
 namespace polynomial {
 
@@ -16,6 +16,7 @@ struct Polynomial {
 
     Polynomial() = default;
     Polynomial(const Term<Coef>& t) { addTerm(t); }
+    Polynomial(const Monomial& m, const Coef& c) { addTerm(m, c); }
 
     bool isZero() const;
     bool isConstant() const;
@@ -63,27 +64,10 @@ struct SquareFreeFactor {
 };
 
 template <class Coef, class Order>
-struct HenselFactor {
-    Polynomial<Coef, Order> factor;
-    Polynomial<Coef, Order> cofactor;
-};
-
-template <class Coef, class Order>
 struct ExtendEuclidResult {
     Polynomial<Coef, Order> gcd;
     Polynomial<Coef, Order> s;
     Polynomial<Coef, Order> t;
-};
-
-template <class Coef, class Order>
-struct FactorNode {
-    using Poly = Polynomial<Coef, Order>;
-
-    Poly factor;
-    std::unique_ptr<FactorNode> left;
-    std::unique_ptr<FactorNode> right;
-
-    bool isLeaf() const { return !left && !right; }
 };
 
 template <class Coef, class Order>
@@ -127,55 +111,23 @@ template <class Coef, class Order>
 Polynomial<Coef, Order> sPolynomial(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
 
 template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> buchberger(std::vector<Polynomial<Coef, Order>> G);
-template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> GroebnerBasis(std::vector<Polynomial<Coef, Order>> G);
-template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> reduceGroebnerBasis(std::vector<Polynomial<Coef, Order>> G);
-
-template <class Coef, class Order>
 int findReducer(const std::vector<Polynomial<Coef, Order>>& G, const Monomial& m);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> multiDerivativeGCD(Polynomial<Coef, Order> f);
 
 template <class Coef, class Order>
-std::vector<SquareFreeFactor<Coef, Order>> squareFreeDecomposition(Polynomial<Coef, Order> f);
-template <class RNG, class Coef, class Order>
-Polynomial<Coef, Order> randomEvaluation(const Polynomial<Coef, Order>& f, std::vector<Coef>& values, RNG& rng,
-                                         int bound = 10);
-template <class Coef, class Order>
-bool evaluationIsGood(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
-
-template <class Coef, class Order>
 DivisionResult<Coef, Order> divideByLinearFactor(const Polynomial<Coef, Order>& p, int var, Coef a);
-template <class Coef, class Order>
-HenselFactor<Coef, Order> henselLiftStep(const Polynomial<Coef, Order>& f, Polynomial<Coef, Order>& g,
-                                         Polynomial<Coef, Order>& h, const Polynomial<Coef, Order>& s,
-                                         const Polynomial<Coef, Order>& t, int var, Coef a, int64_t precision);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> product(const std::vector<Polynomial<Coef, Order>>& factors);
 template <class Coef, class Order>
 Polynomial<Coef, Order> product(const std::vector<Polynomial<Coef, Order>>& factors, size_t begin, size_t end);
-template <class Coef, class Order>
-void henselLiftTree(const Polynomial<Coef, Order>& f, std::vector<Polynomial<Coef, Order>>& factors, int var,
-                    const Coef& a);
-template <class Coef, class Order>
-void henselLiftTree(const Polynomial<Coef, Order>& f, FactorNode<Coef, Order>& node, int var, const Coef& a);
 
 template <class Coef, class Order>
-std::unique_ptr<FactorNode<Coef, Order>> makeLeaf(const Polynomial<Coef, Order>& f);
+int64_t landauMignotteBound(const Polynomial<Coef, Order>& f);
 template <class Coef, class Order>
-std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polynomial<Coef, Order>>& factors,
-                                                         size_t begin, size_t end);
-
-template <class Coef, class Order>
-int kroneckerBase(const Polynomial<Coef, Order>& f);
-template <class Coef, class Order>
-Polynomial<Coef, LexOrder> kroneckerSubstittution(const Polynomial<Coef, Order>& f, int64_t B);
-template <class Coef>
-Polynomial<Coef, LexOrder> inverseKronecker(const Polynomial<Coef, LexOrder>& f, int64_t B, size_t var_num);
+int64_t henselBound(const Polynomial<Coef, Order>& f);
 
 template <class Coef, class Order>
 bool isFactor(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
@@ -184,22 +136,16 @@ template <class Coef, class Order>
 Coef content(const Polynomial<Coef, Order>& f);
 
 template <class Coef, class Order>
-void collectLeaves(FactorNode<Coef, Order>& node, std::vector<Polynomial<Coef, Order>>& ret);
-template <class Coef, class Order>
-Polynomial<int, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p);
+Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p);
 template <class Order>
-Polynomial<int, Order> derivativeMod(const Polynomial<int, Order>& f, int p);
-template <class Order>
-Polynomial<int, Order> powModPolynomial(Polynomial<int, Order> a, int64_t n, const Polynomial<int, Order>& mod, int p);
+Polynomial<ModInt, Order> derivativeMod(const Polynomial<int, Order>& f, int p);
 template <class Order>
 int findGoodPrime(const Polynomial<int, Order>& f);
-std::vector<std::vector<int>> nullSpace(std::vector<std::vector<int>> A, int p);
 template <class Order>
-std::vector<std::vector<int>> berlekampMatrix(const Polynomial<int, Order>& f, int p);
-template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> factorSquareFree(Polynomial<Coef, Order> f);
-template <class Coef, class Order>
-std::vector<std::pair<Polynomial<Coef, Order>, int64_t>> factorize(Polynomial<Coef, Order> f);
+Polynomial<ModInt, Order> powModPolynomial(Polynomial<ModInt, Order> a, int64_t n,
+                                           const Polynomial<ModInt, Order>& mod);
+template <class Order>
+Polynomial<ModInt, Order> frobenius(const Polynomial<ModInt, Order>& g, const Polynomial<ModInt, Order>& f);
 
 }  // namespace polynomial
 

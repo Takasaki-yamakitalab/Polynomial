@@ -1,15 +1,14 @@
 ﻿#ifndef COEFFICIENT_HPP
 #define COEFFICIENT_HPP
 
-#include <complex>
 #include <vector>
 
 namespace polynomial {
 
 template <class Coef>
-Coef content(const std::vector<Coef>& c);
+Coef coefficientGCD(const Coef& a, const Coef& b);
 template <class Coef>
-std::complex<Coef> content(const std::vector<std::complex<Coef>>& c);
+Coef content(const std::vector<Coef>& c);
 
 int64_t permutation(const int64_t& n, const int64_t& r);
 int64_t combination(const int64_t& n, const int64_t& r);

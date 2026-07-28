@@ -12,11 +12,20 @@ if(ANDROID)
 endif()
 
 set(SRC
+    src/coefficient.cpp
+    src/evaluation.cpp
+    src/factor.cpp
+    src/factor_node.cpp
+    src/groebner_basis.cpp
+    src/groebner_basis_f4.cpp
+    src/hensel_lift_multivar.cpp
+    src/hensel_lift_padic.cpp
+    src/kronecker.cpp
     src/monomial.cpp
     src/polynomial.cpp
     src/polynomial_order.cpp
-    src/f4.cpp
     src/term.cpp
+    src/zassenhaus_recombine.cpp
 )
 
 if(MSVC)

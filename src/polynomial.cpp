@@ -1,12 +1,11 @@
 ﻿#include <cstdint>
 #include <cstdio>
-#include <deque>
-#include <memory>
 #include <random>
 #include <type_traits>
 #include "Polynomial/coefficient.hpp"
 #include "Polynomial/coefficient_traits.hpp"
 #include "Polynomial/polynomial.hpp"
+#include "Polynomial/modint.hpp"
 
 namespace polynomial {
 
@@ -263,15 +262,16 @@ DivisionResult<Coef, Order> divide(Polynomial<Coef, Order> f, const std::vector<
     }
     return {Q, R};
 }
+
 template <class Coef, class Order>
-Polynomial<Coef, Order> primitivePartImpl(Polynomial<Coef, Order> p, std::true_type) {
+static Polynomial<Coef, Order> primitivePartImpl(Polynomial<Coef, Order> p, std::true_type) {
     // 体系数
     if (p.isZero()) return p;
     p /= p.leadingCoefficient();
     return p;
 }
 template <class Coef, class Order>
-Polynomial<Coef, Order> primitivePartImpl(Polynomial<Coef, Order> p, std::false_type) {
+static Polynomial<Coef, Order> primitivePartImpl(Polynomial<Coef, Order> p, std::false_type) {
     // 整数係数
     if (p.isZero()) return p;
     Coef c = content(p);
@@ -282,6 +282,7 @@ template <class Coef, class Order>
 Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p) {
     return primitivePartImpl(p, std::integral_constant<bool, coefficient_traits<Coef>::is_field>());
 }
+
 template <class Coef, class Order>
 DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g) {
     using Poly = Polynomial<Coef, Order>;
@@ -327,8 +328,9 @@ Polynomial<Coef, Order> polynomialRemainder(Polynomial<Coef, Order> f, const Pol
     }
     return f;
 }
+
 template <class Coef, class Order>
-Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g, std::true_type) {
+static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g, std::true_type) {
     // 体係数
     using Poly = Polynomial<Coef, Order>;
     while (!g.isZero()) {
@@ -340,7 +342,7 @@ Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<
     return f;
 }
 template <class Coef, class Order>
-Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g, std::false_type) {
+static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g, std::false_type) {
     // 整数係数
     using Poly = Polynomial<Coef, Order>;
     while (!g.isZero()) {
@@ -356,6 +358,7 @@ Polynomial<Coef, Order> polynomialGCD(Polynomial<Coef, Order> f, Polynomial<Coef
     if (g.isZero()) return f;
     return polynomialGCDImpl(f, g, std::integral_constant<bool, coefficient_traits<Coef>::is_field>());
 }
+
 template <class Coef, class Order>
 Polynomial<Coef, Order> pow(Polynomial<Coef, Order> p, int64_t e) {
     using Poly = Polynomial<Coef, Order>;
@@ -370,6 +373,7 @@ Polynomial<Coef, Order> pow(Polynomial<Coef, Order> p, int64_t e) {
     }
     return r;
 }
+
 template <class Coef, class Order>
 Polynomial<Coef, Order> substitute(const Polynomial<Coef, Order>& f, int var, const Polynomial<Coef, Order>& g) {
     using Poly = Polynomial<Coef, Order>;
@@ -442,72 +446,6 @@ Polynomial<Coef, Order> sPolynomial(const Polynomial<Coef, Order>& f, const Poly
 }
 
 template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> buchberger(std::vector<Polynomial<Coef, Order>> G) {
-    using Poly = Polynomial<Coef, Order>;
-    std::deque<std::pair<int, int>> pairs;
-    for (int i = 0; i < (int)G.size(); i++) {
-        for (int j = i + 1; j < (int)G.size(); j++) {
-            pairs.emplace_back(i, j);
-        }
-    }
-    while (!pairs.empty()) {
-        int i = pairs.front().first;
-        int j = pairs.front().second;
-        pairs.pop_front();
-
-        if (gcd(G[i].leadingMonomial(), G[j].leadingMonomial()).isOne()) continue;
-
-        Poly S = sPolynomial(G[i], G[j]);
-        S.normalForm(G);
-        if (S.isZero()) continue;
-
-        bool exist = false;
-        for (auto& g : G) {
-            if (g == S) exist = true;
-        }
-        if (exist) continue;
-
-        int k = (int)G.size();
-        G.push_back(S);
-        for (int t = 0; t < k; t++) {
-            pairs.emplace_back(t, k);
-        }
-    }
-    return G;
-}
-
-template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> reduceGroebnerBasis(std::vector<Polynomial<Coef, Order>> G) {
-    using Poly = Polynomial<Coef, Order>;
-
-    for (size_t i = 0; i < G.size();) {
-        std::vector<Poly> others;
-        for (size_t j = 0; j < G.size(); j++) {
-            if (i != j) others.push_back(G[j]);
-        }
-        G[i].normalForm(others);
-        if (G[i].isZero()) {
-            G.erase(G.begin() + i);
-            continue;
-        }
-        i++;
-    }
-
-    // make monic
-    for (auto& g : G) {
-        g *= Coef(1) / g.leadingCoefficient();
-    }
-    return G;
-}
-
-template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> groebnerBasis(std::vector<Polynomial<Coef, Order>> G) {
-    G = buchberger(G);
-    G = reduceGroebnerBasis(G);
-    return G;
-}
-
-template <class Coef, class Order>
 int findReducer(const std::vector<Polynomial<Coef, Order>>& G, const Monomial& m) {
     for (int i = 0; i < (int)G.size(); i++) {
         if (G[i].leadingMonomial().divides(m)) return i;
@@ -530,71 +468,6 @@ Polynomial<Coef, Order> multiDerivativeGCD(Polynomial<Coef, Order> f) {
         if (g.isConstant()) break;
     }
     return g;
-}
-
-template <class Coef, class Order>
-std::vector<SquareFreeFactor<Coef, Order>> squareFreeDecomposition(Polynomial<Coef, Order> f) {
-    using Poly = Polynomial<Coef, Order>;
-    std::vector<SquareFreeFactor<Coef, Order>> ans;
-
-    Poly g = multiDerivativeGCD(f);
-    Poly w = divide(f, {g}).Q[0];
-
-    uint64_t i = 1;
-    while (!w.isConstant()) {
-        Poly y = polynomialGCD(w, g);
-        Poly z = divide(w, {y}).Q[0];
-        if (!z.isConstant()) ans.push_back({z, i});
-        w = y;
-        g = divide(g, {y}).Q[0];
-        i++;
-    }
-
-    if (!g.isConstant()) {
-        ans.push_back({g, i});
-    }
-
-    return ans;
-}
-
-template <class RNG, class Coef, class Order>
-Polynomial<Coef, Order> randomEvaluation(const Polynomial<Coef, Order>& f, std::vector<Coef>& values, RNG& rng,
-                                         int bound) {
-    using Poly = Polynomial<Coef, Order>;
-
-    const int vars = f.leadingMonomial().size();
-
-    values.resize(vars);
-
-    values[0] = Coef(0);
-
-    std::uniform_int_distribution<int> dist(-bound, bound);
-
-    Poly g = f;
-
-    for (int i = 1; i < vars; i++) {
-        Coef a;
-
-        do {
-            a = Coef(dist(rng));
-        } while (a == Coef(0));
-
-        values[i] = a;
-
-        g = substitute(g, i, a);
-    }
-
-    return g;
-}
-template <class Coef, class Order>
-bool evaluationIsGood(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g) {
-    if (g.degree() != f.degree()) return false;
-
-    auto d = differential(g, 0);
-
-    if (!polynomialGCD(g, d).isConstant()) return false;
-
-    return true;
 }
 
 template <class Coef, class Order>
@@ -676,30 +549,6 @@ ExtendEuclidResult<Coef, Order> extendedEuclid(Polynomial<Coef, Order> f, Polyno
     return {f, s0, t0};
 }
 template <class Coef, class Order>
-HenselFactor<Coef, Order> henselLiftStep(const Polynomial<Coef, Order>& f, Polynomial<Coef, Order>& g,
-                                         Polynomial<Coef, Order>& h, const Polynomial<Coef, Order>& s,
-                                         const Polynomial<Coef, Order>& t, int var, Coef a, int64_t precision) {
-    using Poly = Polynomial<Coef, Order>;
-
-    size_t dim = f.leadingMonomial().size();
-    Monomial mono(dim);
-    Poly factor;
-    for (int64_t n = precision; n >= 0; n--) {
-        Monomial m = mono;
-        m.add_exp(var, n);
-        Coef c = combination(precision, n) * pow(-a, precision - n);
-        factor.addTerm(m, c);
-    }
-
-    Poly E = f - g * h;
-    for (int64_t i = 0; i < precision; i++) {
-        E = divideByLinearFactor(E, var, a).Q[0];
-    }
-    g += (t * E) * factor;
-    h += (s * E) * factor;
-    return {g, h};
-}
-template <class Coef, class Order>
 Polynomial<Coef, Order> shiftVariable(const Polynomial<Coef, Order>& f, int var, const Coef& a) {
     using Poly = Polynomial<Coef, Order>;
     Poly ret;
@@ -732,18 +581,6 @@ Polynomial<Coef, Order> truncateByPower(const Polynomial<Coef, Order>& f, int va
 }
 
 template <class Coef, class Order>
-void henselLift(const Polynomial<Coef, Order>& f, Polynomial<Coef, Order>& g, Polynomial<Coef, Order>& h, int var,
-                const Coef& a) {
-    auto ee = extendedEuclid(substitute(g, var, a), substitute(h, var, a));
-
-    int precision = 1;
-    while (precision <= f.degree(var)) {
-        henselLiftStep(f, g, h, ee.s, ee.t, var, a, precision);
-        precision *= 2;
-    }
-}
-
-template <class Coef, class Order>
 Polynomial<Coef, Order> product(const std::vector<Polynomial<Coef, Order>>& factors) {
     using Poly = Polynomial<Coef, Order>;
     if (factors.empty()) return Poly();
@@ -765,116 +602,21 @@ Polynomial<Coef, Order> product(const std::vector<Polynomial<Coef, Order>>& fact
 }
 
 template <class Coef, class Order>
-void henselLiftTree(const Polynomial<Coef, Order>& f, std::vector<Polynomial<Coef, Order>>& factors, int var,
-                    const Coef& a) {
-    using Poly = Polynomial<Coef, Order>;
-    if (factors.size() <= 1) return;
-
-    size_t mid = factors.size() / 2;
-    std::vector<Poly> leftFactors(factors.begin(), factors.begin() + mid);
-    std::vector<Poly> rightFactors(factors.begin() + mid, factors.end());
-
-    Poly g = product(leftFactors);
-    Poly h = product(rightFactors);
-    henselLift(f, g, h, var, a);
-
-    henselLiftTree(g, leftFactors, var, a);
-    henselLiftTree(h, rightFactors, var, a);
-
-    factors.clear();
-
-    factors.insert(factors.end(), leftFactors.begin(), leftFactors.end());
-    factors.insert(factors.end(), rightFactors.begin(), rightFactors.end());
-}
-
-template <class Coef, class Order>
-void henselLiftTree(const Polynomial<Coef, Order>& f, FactorNode<Coef, Order>& node, int var, const Coef& a) {
-    using FNode = FactorNode<Coef, Order>;
-    using Poly = Polynomial<Coef, Order>;
-
-    if (node.isLeaf()) return;
-
-    Poly g = node.left->factor;
-    Poly h = node.right->factor;
-
-    henselLift(f, g, h, var, a);
-
-    node->left->factor = g;
-    node->left->factor = h;
-
-    henselLiftTree(g, *node->left, var, a);
-    henselLiftTree(h, *node->right, var, a);
-
-    // 念のため再計算
-    node.factor = node.left->factor * node.right->factor;
-}
-
-template <class Coef, class Order>
-std::unique_ptr<FactorNode<Coef, Order>> makeLeaf(const Polynomial<Coef, Order>& f) {
-    auto node = std::make_unique<FactorNode<Coef, Order>>();
-    node->factor = f;
-    return node;
-}
-
-template <class Coef, class Order>
-std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polynomial<Coef, Order>>& factors,
-                                                         size_t begin, size_t end) {
-    using FNode = FactorNode<Coef, Order>;
-    using Poly = Polynomial<Coef, Order>;
-    auto node = std::make_unique<FNode>();
-    if (end - begin == 1) {
-        node->factor = factors[begin];
-        return node;
-    }
-    size_t mid = (begin + end) / 2;
-    node->left = buildFactorTree(factors, begin, mid);
-    node->right = buildFactorTree(factors, mid, end);
-    node->factor = node->left->factor * node->right->factor;
-    return node;
-}
-
-template <class Coef, class Order>
-int kroneckerBase(const Polynomial<Coef, Order>& f) {
-    int B = 1;
-    size_t n = f.leadingMonomial().size();
-    for (size_t i = 0; i < n; i++) {
-        B = max(B, f.degree(i) + 1);
-    }
-    return B;
-}
-template <class Coef, class Order>
-Polynomial<Coef, LexOrder> kroneckerSubstittution(const Polynomial<Coef, Order>& f, int64_t B) {
-    using UniPoly = Polynomial<Coef, LexOrder>;
-    UniPoly ret;
+int64_t landauMignotteBound(const Polynomial<Coef, Order>& f) {
+    int64_t n = f.degree();
+    int64_t infNorm = 0;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
-        int64_t e = 0;
-        int64_t base = 1;
-        for (size_t i = 0; i < it->first.size(); i++) {
-            e += it->first.exp(i) * base;
-            base *= B;
-        }
-        Monomial m(std::vector<int64_t>{e});
+        infNorm = std::max(infNorm, std::abs(it->second));
+    }
+    double B = std::pow(2.0, n) * std::sqrt(double(n + 1)) * double(infNorm);
+    return (int64_t)std::ceil(B);
+}
+template <class Coef, class Order>
+int64_t henselBound(const Polynomial<Coef, Order>& f) {
+    return 2 * landauMignotteBound(f);
+}
 
-        ret.addTerm(m, it->second);
-    }
-    return ret;
-}
-template <class Coef>
-Polynomial<Coef, LexOrder> inverseKronecker(const Polynomial<Coef, LexOrder>& f, int64_t B, size_t var_num) {
-    using Poly = Polynomial<Coef, LexOrder>;
-    Poly ret;
-    for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
-        int64_t e = it->first.exp(0);
-        std::vector<int64_t> exps(var_num, 0);
-        for (int i = 0; i < var_num; i++) {
-            exps[i] = e % B;
-            e /= B;
-        }
-        Monomial m(exps);
-        ret.addTerm(m, it->second);
-    }
-    return ret;
-}
+
 template <class Coef, class Order>
 bool isFactor(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g) {
     auto div = divide(f, {g});
@@ -883,41 +625,45 @@ bool isFactor(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g
 }
 
 template <class Coef, class Order>
+Coef contentImpl(const Polynomial<Coef, Order>& f, std::true_type) {
+    return Coef(1);
+}
+template <class Coef, class Order>
+Coef contentImpl(const Polynomial<Coef, Order>& f, std::false_type) {
+    if (f.isZero()) return Coef(0);
+    auto it = f.terms.begin();
+    Coef g = abs(it->second);
+    it++;
+    for (; it != f.terms.end(); it++) {
+        g = coefficientGCD(g, abs(it->second));
+    }
+    return g;
+}
+template <class Coef, class Order>
 Coef content(const Polynomial<Coef, Order>& f) {
-    std::vector<Coef> c;
-    for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
-        c.push_back(it->second);
-    }
-    return content(c);
+    return contentImpl(f, std::integral_constant<bool, coefficient_traits<Coef>::is_field>());
 }
+
 template <class Coef, class Order>
-void collectLeaves(FactorNode<Coef, Order>& node, std::vector<Polynomial<Coef, Order>>& ret) {
-    if (node.isLeaf()) {
-        ret.push_back(node.factor);
-        return;
-    }
-    collectLeaves(*node.left, ret);
-    collectLeaves(*node.right, ret);
-}
-template <class Coef, class Order>
-Polynomial<int, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p) {
-    Polynomial<int, Order> ret;
+Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p) {
+    ModInt::setMod(p);
+    Polynomial<ModInt, Order> ret;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
-        int v = (int)(it->second + 0.5) % p;
-        if (v < 0) v += p;
-        if (v != 0) ret.addTerm(it->first, v);
+        ModInt v((int)(it->second + 0.5));
+        if (v.value() != 0) ret.addTerm(it->first, v);
     }
     return ret;
 }
 template <class Order>
-Polynomial<int, Order> derivativeMod(const Polynomial<int, Order>& f, int p) {
+Polynomial<ModInt, Order> derivativeMod(const Polynomial<int, Order>& f, int p) {
     auto df = differential(f, 0);
     return modPolynomial(df, p);
 }
 template <class Order>
 int findGoodPrime(const Polynomial<int, Order>& f) {
-    static const int primes[] = {2,  3,  5,  7,  11, 13, 17, 19, 23, 29, 31, 37, 41,
-                                 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97};
+    static const int primes[] = {2,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,
+                                 53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103, 107, 109, 113,
+                                 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 199};
 
     for (int p : primes) {
         auto fp = modPolynomial(f, p);
@@ -936,212 +682,32 @@ int findGoodPrime(const Polynomial<int, Order>& f) {
     throw std::runtime_error("no suitable prime");
 }
 template <class Order>
-Polynomial<int, Order> powModPolynomial(Polynomial<int, Order> a, int64_t n, const Polynomial<int, Order>& mod, int p) {
-    Polynomial<int, Order> result;
-    result.addTerm(Monomial(1), 1);
+Polynomial<ModInt, Order> powModPolynomial(Polynomial<ModInt, Order> a, int64_t n,
+                                           const Polynomial<ModInt, Order>& mod) {
+    Polynomial<int, Order> ret;
+    ret.addTerm(Monomial(1), ModInt(1));
 
     while (n > 0) {
         if (n & 1) {
-            result = divide(result * a, {mod}).R;
+            ret = divide(ret * a, {mod}).R;
         }
         a = divide(a * a, {mod}).R;
         n >>= 1;
     }
-    return modPolynomial(result, p);
-}
-template <class Order>
-std::vector<std::vector<int>> berlekampMatrix(const Polynomial<int, Order>& f, int p) {
-    int n = f.degree(0);
-
-    std::vector<std::vector<int>> Q(n, std::vector<int>(n));
-
-    Polynomial<int, Order> x;
-    x.addTerm(Monomial(std::vector<int64_t>{1}), 1);
-
-    for (int j = 0; j < n; j++) {
-        auto r = powModPolynomial(x, (int64_t)std::pow(p, j), f, p);
-
-        for (auto it = r.terms.begin(); it != r.terms.end(); it++) {
-            int i = it->first.exp(0);
-            Q[i][j] = it->second;
-        }
-    }
-
-    // Q-I
-    for (int i = 0; i < n; i++) {
-        Q[i][i] -= 1;
-        Q[i][i] %= p;
-        if (Q[i][i] < 0) Q[i][i] += p;
-    }
-
-    return Q;
-}
-std::vector<std::vector<int>> nullSpace(std::vector<std::vector<int>> A, int p) {
-    // mod p Gauss elimination
-    int m = (int)A.size();
-    int n = (int)A[0].size();
-
-    std::vector<int> pivot(n, -1);
-
-    int row = 0;
-
-    for (int col = 0; col < n && row < m; col++) {
-        int sel = row;
-
-        while (sel < m && A[sel][col] == 0) sel++;
-
-        if (sel == m) continue;
-
-        std::swap(A[sel], A[row]);
-
-        int inv = 1;
-
-        // pが素数なのでpowで逆元
-        for (int i = 1; i < p; i++) {
-            if ((A[row][col] * i) % p == 1) {
-                inv = i;
-                break;
-            }
-        }
-
-        for (int j = 0; j < n; j++) A[row][j] = A[row][j] * inv % p;
-
-        for (int i = 0; i < m; i++) {
-            if (i == row) continue;
-
-            int c = A[i][col];
-
-            for (int j = 0; j < n; j++) {
-                A[i][j] = (A[i][j] - c * A[row][j]) % p;
-
-                if (A[i][j] < 0) A[i][j] += p;
-            }
-        }
-
-        pivot[col] = row;
-
-        row++;
-    }
-
-    std::vector<std::vector<int>> basis;
-
-    for (int freeCol = 0; freeCol < n; freeCol++) {
-        if (pivot[freeCol] != -1) continue;
-
-        std::vector<int> v(n);
-
-        v[freeCol] = 1;
-
-        for (int col = 0; col < n; col++) {
-            if (pivot[col] != -1) {
-                v[col] = -A[pivot[col]][freeCol];
-
-                v[col] %= p;
-
-                if (v[col] < 0) v[col] += p;
-            }
-        }
-
-        basis.push_back(v);
-    }
-
-    return basis;
-}
-template <class Order>
-std::vector<Polynomial<int, Order>> berlekampFactor(Polynomial<int, Order> f, int p) {
-    std::vector<Polynomial<int, Order>> ret;
-
-    f = modPolynomial(f, p);
-
-    auto basis = nullSpace(berlekampMatrix(f, p), p);
-
-    if (basis.size() == 1) {
-        ret.push_back(f);
-        return ret;
-    }
-
-    // 今は最初の基底だけ利用
-    for (auto& v : basis) {
-        Polynomial<int, Order> b;
-
-        for (int i = 0; i < v.size(); i++) {
-            if (v[i] != 0) {
-                b.addTerm(Monomial(std::vector<int64_t>{i}), v[i]);
-            }
-        }
-
-        for (int a = 0; a < p; a++) {
-            Polynomial<int, Order> tmp = b;
-            tmp.addTerm(Monomial(b.leadingMonomial().size()), -a);
-            auto g = polynomialGCD(f, tmp);
-
-            if (!g.isConstant() && g != f) {
-                auto left = berlekampFactor(g, p);
-                auto right = berlekampFactor(divide(f, {g}).Q[0], p);
-                ret.insert(ret.end(), left.begin(), left.end());
-                ret.insert(ret.end(), right.begin(), right.end());
-                return ret;
-            }
-        }
-    }
-    ret.push_back(f);
+    // return modPolynomial(result, p);
     return ret;
 }
-template <class Coef, class Order>
-std::vector<Polynomial<Coef, Order>> factorSquareFree(Polynomial<Coef, Order> f) {
-    using Poly = Polynomial<Coef, Order>;
-
-    std::vector<Poly> result;
-
-    if (f.degree() == 1) {
-        result.push_back(f);
-        return result;
+template <class Order>
+Polynomial<ModInt, Order> frobenius(const Polynomial<ModInt, Order>& g, const Polynomial<ModInt, Order>& f) {
+    // only for univariate polynomials
+    Polynomial<ModInt, Order> h;
+    int p = ModInt::modulus();
+    for (auto it = g.terms.begin(); it != g.terms.end(); it++) {
+        Monomial m = it->first;
+        m.set_exp(0, m.exp(0) * p);
+        h.addTerm(m, it->second);
     }
-
-    // 適切な素数の選択
-    int p = findGoodPrime(f);
-
-    // mod p
-    auto fp = modPolynomial(f, p);
-
-    // 有限体因数分解
-    auto modFactors = berlekampFactor(fp, p);
-
-    // Hensel lifting
-    auto tree = buildFactorTree(modFactors, 0, modFactors.size());
-    henselLiftTree(f, *tree, 0, 0);
-
-    // 因子を取得
-    collectLeaves(*tree, result);
-
-    return result;
-}
-template <class Coef, class Order>
-std::vector<std::pair<Polynomial<Coef, Order>, int64_t>> factorize(Polynomial<Coef, Order> f) {
-    using Poly = Polynomial<Coef, Order>;
-
-    std::vector<std::pair<Poly, int64_t>> ans;
-
-    // 定数なら終了
-    if (f.isConstant()) return ans;
-
-    // 1. content 除去
-    Coef c = content(f);
-    f *= Coef(1) / c;
-
-    // 2. square-free decomposition
-    auto sqfs = squareFreeDecomposition(f);
-
-    // 3. 各 square-free 部分を因数分解
-    for (auto& sqf : sqfs) {
-        auto factors = factorSquareFree(sqf.poly);
-
-        for (auto& h : factors) {
-            ans.push_back({h, sqf.multiplicity});
-        }
-    }
-
-    return ans;
+    return polynomialRemainder(h, f);
 }
 
 }  // namespace polynomial

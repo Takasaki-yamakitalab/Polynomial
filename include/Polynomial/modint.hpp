@@ -2,44 +2,54 @@
 #define MODINT_HPP
 
 #include <ostream>
+#include <cassert>
 #include "coefficient_traits.hpp"
 
 namespace polynomial {
 
-template <int P>
+// P must be prime
 class ModInt {
     int v;
+    static int P;
 
    public:
-    ModInt(int x = 0) {
-        v = x % P;
-        if (v < 0) v += P;
+    static void setMod(int p) {
+        assert(p > 1);
+        P = p;
+    }
+    ModInt() : v(0) {}
+    template <class Integer>
+    ModInt(Integer value) {
+        int64_t x = value % P;
+        if (x < 0) x += P;
+        v = (int)x;
     }
 
     int value() const { return v; }
+    static int modulus() { return P; }
     bool isZero() const { return v == 0; }
     bool isOne() const { return v == 1; }
-    static int modPow(int a, int64_t e) {
+    static int modPow(int a, int64_t e, int p) {
         int64_t r = 1;
         int64_t x = a;
         while (e > 0) {
-            if (e & 1) r = r * x % P;
-            x = x * x % P;
+            if (e & 1) r = r * x % p;
+            x = x * x % p;
             e >>= 1;
         }
         return (int)r;
     }
     ModInt inverse() const {
         assert(v != 0);
-        return ModInt(modPow(v, P - 2));
+        return ModInt(modPow(v, P - 2, P));
     }
 
     ModInt operator-() const { return ModInt(-v); }
 
-    ModInt operator+(const ModInt& b) const { return ModInt(v + b.v); }
-    ModInt operator-(const ModInt& b) const { return ModInt(v - b.v); }
-    ModInt operator*(const ModInt& b) const { return ModInt((int64_t)v * b.v); }
-    ModInt operator/(const ModInt& b) const { return *this * b.inverse(); }
+    ModInt operator+(const ModInt& b) const { assert(P == b.P); return ModInt(v + b.v); }
+    ModInt operator-(const ModInt& b) const { assert(P == b.P); return ModInt(v - b.v); }
+    ModInt operator*(const ModInt& b) const { assert(P == b.P); return ModInt((int64_t)v * b.v); }
+    ModInt operator/(const ModInt& b) const { assert(P == b.P); return *this * b.inverse(); }
 
     friend ModInt operator+(const int& a, const ModInt& b) { return ModInt(a) + b; }
     friend ModInt operator-(const int& a, const ModInt& b) { return ModInt(a) - b; }
@@ -65,12 +75,21 @@ class ModInt {
 
     bool operator==(const ModInt& b) const { return v == b.v; }
     bool operator!=(const ModInt& b) const { return v != b.v; }
+    bool operator<(const ModInt& b) const { return v < b.v; }
+    bool operator>(const ModInt& b) const { return v > b.v; }
+    bool operator<=(const ModInt& b) const { return v <= b.v; }
+    bool operator>=(const ModInt& b) const { return v >= b.v; }
+
+    friend bool operator==(const ModInt& a, const int& b) { return a == ModInt(b); }
+    friend bool operator==(const int& a, const ModInt& b) { return ModInt(a) == b; }
+    friend bool operator!=(const ModInt& a, const int& b) { return a != ModInt(b); }
+    friend bool operator!=(const int& a, const ModInt& b) { return ModInt(a) != b; }
 
     friend std::ostream& operator<<(std::ostream& os, const ModInt& a) { return os << a.v; }
 };
 
-template <int P>
-struct coefficient_traits<ModInt<P>> {
+template <>
+struct coefficient_traits<ModInt> {
     static const bool is_field = true;
 };
 

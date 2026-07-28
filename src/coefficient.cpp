@@ -10,10 +10,6 @@ Coef coefficientGCD(const Coef& a, const Coef& b) {
         a = temp;
     }
 }
-template <class T>
-std::complex<T> coefficientGCD(const std::complex<T>& a, const std::complex<T>& b) {
-    return {T(1), T(0)};
-}
 
 template <class Coef>
 Coef content(const std::vector<Coef>& c) {
@@ -23,11 +19,6 @@ Coef content(const std::vector<Coef>& c) {
         g = coefficientGCD(g, abs(c[i]));
     }
     return g;
-}
-
-template <class T>
-std::complex<T> content(const std::vector<std::complex<T>>& c) {
-    return {T(1), T(0)};
 }
 
 int64_t permutation(const int64_t& n, const int64_t& r) {
