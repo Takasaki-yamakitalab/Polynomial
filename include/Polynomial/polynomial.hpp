@@ -481,6 +481,7 @@ static Polynomial<Coef, Order> primitivePartImpl(Polynomial<Coef, Order> p, std:
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p) {
+    if (p.isZero()) return p;
     p = primitivePartImpl(p, std::integral_constant<bool, coefficient_traits<Coef>::is_field>());
     if (p.leadingCoefficient() < Coef(0)) p = -p;
     return p;
@@ -580,7 +581,11 @@ static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Poly
 
     Coef c = coefficientGCD(content(f), content(g));
     while (!g.isZero()) {
-        Poly r = primitivePart(pseudoRemainder(f, g));
+        Poly r = pseudoRemainder(f, g);
+        std::cout << "[DEBUG] r: " << r << "\n";
+        std::cout << "[DEBUG] isZero: " << r.isZero() << "\n";
+        std::cout << "[DEBUG] size: " << r.terms.size() << "\n";
+        r = primitivePart(r);
         f = g;
         g = r;
     }
@@ -693,15 +698,11 @@ Polynomial<Coef, Order> multiDerivativeGCD(Polynomial<Coef, Order> f) {
     Poly g = f;
     int n = f.leadingMonomial().size();
     for (int i = 0; i < n; i++) {
-        std::cout << "debug1" << std::endl;
         Poly df = differential(f, i);
-        std::cout << "debug2" << std::endl;
 
         if (df.isZero()) continue;
 
-        std::cout << "debug3" << std::endl;
         g = polynomialGCD(g, df);
-        std::cout << "debug4" << std::endl;
 
         if (g.isConstant()) break;
     }
@@ -905,7 +906,7 @@ Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p)
     ModContext::setMod(p);
     Polynomial<ModInt, Order> ret;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
-        ModInt v((int)(it->second + 0.5));
+        ModInt v((int)std::round(it->second));
         if (v.value() != 0) ret.addTerm(it->first, v);
     }
     return ret;
@@ -915,7 +916,7 @@ Polynomial<ModInt, Order> modPolynomial(const Polynomial<ModInt, Order>& f, int 
     ModContext::setMod(p);
     Polynomial<ModInt, Order> ret;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
-        ModInt v((int)(it->second.value() + 0.5));
+        ModInt v((int)std::round(it->second.value() + 0.5));
         if (v.value() != 0) ret.addTerm(it->first, v);
     }
     return ret;
@@ -939,7 +940,11 @@ int findGoodPrime(const Polynomial<int, Order>& f) {
 
         auto df = derivativeMod(f, p);
 
+        std::cout << "[DEBUG] p: " << p << std::endl;
+        std::cout << "[DEBUG] fp: " << fp << std::endl;
+        std::cout << "[DEBUG] df: " << df << std::endl;
         auto g = polynomialGCD(fp, df);
+        std::cout << "[DEBUG] gcd: " << g << std::endl;
 
         // square-free
         if (g.isConstant()) return p;

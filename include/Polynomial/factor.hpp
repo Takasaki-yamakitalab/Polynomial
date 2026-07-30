@@ -174,9 +174,10 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     using Poly = Polynomial<Integer, LexOrder>;
     if (f.degree() == 1) return {f};
 
+    std::cout << "[DEBUG] before findGoodPrime" << std::endl;
     int p = findGoodPrime(f);
-    Polynomial<ModInt, LexOrder> fp = modPolynomial(f, p);
     std::cout << "[DEBUG] p: " << p << std::endl;
+    Polynomial<ModInt, LexOrder> fp = modPolynomial(f, p);
     std::cout << "[DEBUG] fp: " << fp << std::endl;
 
     // 有限体因数分解 (Berlekamp)
@@ -224,8 +225,11 @@ std::vector<Polynomial<Integer, Order>> factorSquareFree(Polynomial<Integer, Ord
 
     int64_t B = kroneckerBase(f);
     Polynomial<Integer, LexOrder> univarPoly = kroneckerSubstittution(f, B);
+    std::cout << "[DEBUG] B: " << B << std::endl;
+    std::cout << "[DEBUG] g: " << univarPoly << std::endl;
 
     std::vector<Polynomial<Integer, LexOrder>> univarFactors = factorUniVar(univarPoly);
+    for (auto& fact : univarFactors) std::cout << "[DEBUG] univarFactors: " << fact << std::endl;
 
     univarFactors = inverseKroneckerAll(univarFactors, B, f.leadingMonomial().size());
 
