@@ -55,7 +55,7 @@ struct Polynomial {
     Polynomial operator-() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Polynomial<Coef, Order>& f) {
-        for (auto it = f.terms.begin(); it != f.terms.end(); ) {
+        for (auto it = f.terms.begin(); it != f.terms.end();) {
             os << it->second << "*" << it->first;
             if (++it != f.terms.end()) os << "+";
         }
@@ -103,7 +103,8 @@ Polynomial<Coef, Order> differential(const Polynomial<Coef, Order>& p, int var);
 template <class Coef, class Order>
 DivisionResult<Coef, Order> divide(Polynomial<Coef, Order> f, const std::vector<Polynomial<Coef, Order>>& G);
 template <class Integer, class Order>
-DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G, const int p);
+DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G,
+                                         const int p);
 template <class Coef, class Order>
 Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p);
 template <class Coef, class Order>
@@ -116,11 +117,15 @@ template <class Coef, class Order>
 Polynomial<Coef, Order> substitute(Polynomial<Coef, Order> f, const std::vector<Polynomial<Coef, Order>>& g);
 template <class Coef, class Order>
 DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g);
+
 template <class Coef, class Order>
 Polynomial<Coef, Order> pseudoRemainder(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
+
 template <class Coef, class Order>
 Polynomial<Coef, Order> polynomialRemainder(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g);
 
+template <class Coef, class Order>
+size_t selectLowDegVar(const std::vector<Polynomial<Coef, Order>>& F);
 template <class Coef, class Order>
 Polynomial<Coef, Order> polynomialGCD(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g);
 
@@ -135,6 +140,10 @@ Polynomial<Coef, Order> multiDerivativeGCD(Polynomial<Coef, Order> f);
 
 template <class Coef, class Order>
 DivisionResult<Coef, Order> divideByLinearFactor(const Polynomial<Coef, Order>& p, int var, Coef a);
+template <class Coef, class Order>
+ExtendEuclidResult<Coef, Order> extendedEuclid(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g);
+template <class Integer, class Order>
+ExtendEuclidResult<Integer, Order> extendedEuclidMod(Polynomial<Integer, Order> f, Polynomial<Integer, Order> g, int p);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> product(const std::vector<Polynomial<Coef, Order>>& factors);
@@ -165,8 +174,6 @@ Polynomial<ModInt, Order> powModPolynomial(Polynomial<ModInt, Order> a, int64_t 
                                            const Polynomial<ModInt, Order>& mod);
 template <class Order>
 Polynomial<ModInt, Order> frobenius(const Polynomial<ModInt, Order>& g, const Polynomial<ModInt, Order>& f);
-
-
 
 template <class Coef, class Order>
 bool Polynomial<Coef, Order>::isZero() const {
@@ -254,7 +261,6 @@ bool Polynomial<Coef, Order>::reducibleBy(const Polynomial& g) const {
 template <class Coef, class Order>
 Polynomial<Coef, Order>& Polynomial<Coef, Order>::reduceOnceBy(const Polynomial<Coef, Order>& g) {
     assert(reducibleBy(g));
-    auto before = leadingTerm();    // debug
     auto t = leadingTerm() / g.leadingTerm();
     *this -= g * t;
     return *this;
@@ -429,7 +435,8 @@ DivisionResult<Coef, Order> divide(Polynomial<Coef, Order> f, const std::vector<
     return {Q, R};
 }
 template <class Integer, class Order>
-DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G, const int p) {
+DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G,
+                                         const int p) {
     std::vector<Polynomial<Integer, Order>> Q;
     Polynomial<Integer, Order> R;
 
@@ -484,6 +491,7 @@ DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polyno
     using Poly = Polynomial<Coef, Order>;
     DivisionResult<Coef, Order> ret;
     assert(!g.isZero());
+    std::cout << "[DEBUG] pseudoDivide(" << f << ", " << g << ")" << std::endl;
 
     Poly R = f;
     Poly Q;
@@ -527,6 +535,29 @@ Polynomial<Coef, Order> polynomialRemainder(Polynomial<Coef, Order> f, const Pol
 }
 
 template <class Coef, class Order>
+size_t selectLowDegVar(const std::vector<Polynomial<Coef, Order>>& F) {
+    size_t var = 0;
+    int64_t min_score = 0;
+
+    if (F.empty()) return 0;
+
+    size_t n = F[0].leadingMonomial().size();
+
+    for (size_t k = 0; k < F.size(); k++) {
+        min_score += F[k].degree(0);
+    }
+    for (size_t i = 1; i < n; i++) {
+        size_t score = 0;
+        for (auto& f : F) score += f.degree(i);
+        if (score < min_score) {
+            min_score = score;
+            var = i;
+        }
+    }
+    return var;
+}
+
+template <class Coef, class Order>
 static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g, std::true_type) {
     // 体係数
     using Poly = Polynomial<Coef, Order>;
@@ -539,9 +570,14 @@ static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Poly
     return f;
 }
 template <class Coef, class Order>
-static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g, std::false_type) {
+static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g,
+                                                 std::false_type) {
     // 整数係数
     using Poly = Polynomial<Coef, Order>;
+    if (g.isZero()) return primitivePart(f);
+
+    size_t var = selectLowDegVar(std::vector{f, g});
+
     Coef c = coefficientGCD(content(f), content(g));
     while (!g.isZero()) {
         Poly r = primitivePart(pseudoRemainder(f, g));
@@ -657,11 +693,15 @@ Polynomial<Coef, Order> multiDerivativeGCD(Polynomial<Coef, Order> f) {
     Poly g = f;
     int n = f.leadingMonomial().size();
     for (int i = 0; i < n; i++) {
+        std::cout << "debug1" << std::endl;
         Poly df = differential(f, i);
+        std::cout << "debug2" << std::endl;
 
         if (df.isZero()) continue;
 
+        std::cout << "debug3" << std::endl;
         g = polynomialGCD(g, df);
+        std::cout << "debug4" << std::endl;
 
         if (g.isConstant()) break;
     }
@@ -746,6 +786,25 @@ ExtendEuclidResult<Coef, Order> extendedEuclid(Polynomial<Coef, Order> f, Polyno
 
     return {f, s0, t0};
 }
+template <class Integer, class Order>
+ExtendEuclidResult<Integer, Order> extendedEuclidMod(Polynomial<Integer, Order> f, Polynomial<Integer, Order> g,
+                                                     int p) {
+    using Poly = Polynomial<Integer, Order>;
+    Polynomial<ModInt, Order> fp = modPolynomial(f, p);
+    Polynomial<ModInt, Order> gp = modPolynomial(g, p);
+    ExtendEuclidResult<ModInt, Order> result = extendedEuclid(fp, gp);
+    ExtendEuclidResult<Integer, Order> ret;
+    for (auto it = result.gcd.terms.begin(); it != result.gcd.terms.end(); it++) {
+        ret.gcd.addTerm(it->first, Integer(it->second.value()));
+    }
+    for (auto it = result.s.terms.begin(); it != result.s.terms.end(); it++) {
+        ret.s.addTerm(it->first, Integer(it->second.value()));
+    }
+    for (auto it = result.t.terms.begin(); it != result.t.terms.end(); it++) {
+        ret.t.addTerm(it->first, Integer(it->second.value()));
+    }
+    return ret;
+}
 template <class Coef, class Order>
 Polynomial<Coef, Order> shiftVariable(const Polynomial<Coef, Order>& f, int var, const Coef& a) {
     using Poly = Polynomial<Coef, Order>;
@@ -813,7 +872,6 @@ template <class Coef, class Order>
 int64_t henselBound(const Polynomial<Coef, Order>& f) {
     return 2 * landauMignotteBound(f);
 }
-
 
 template <class Coef, class Order>
 bool isFactor(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g) {

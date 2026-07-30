@@ -38,6 +38,7 @@ class ModInt {
     }
 
     int value() const { return v; }
+    int modulus() const { return P; }
     bool isZero() const { return v == 0; }
     bool isOne() const { return v == 1; }
     static int modPow(int a, int64_t e, int p) {

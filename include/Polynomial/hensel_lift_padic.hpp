@@ -20,35 +20,27 @@ template <class Integer, class Order>
 void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
                      Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const Integer& pk,
                      const Integer& p) {
+    // Algorithm 3.5.6 (Hensel Quadratic Lift)
+    // Cohen, A Course in Computational Algebraic Number Theory (1993)
     using Poly = Polynomial<Integer, Order>;
 
     // factor correction
     Poly E = (f - g * h) / pk;
-    Poly u = s * E;
-    Poly v = t * E;
-    DivisionResult<Integer, Order> divU = divideMod(u, {h}, p);
-    DivisionResult<Integer, Order> divV = divideMod(v, {g}, p);
-    Poly q = divU.Q[0];
-    Poly r = divU.R;
-    Poly a = divV.R;
-    Poly b = r + q * g;
-    g += pk * a;
-    h += pk * b;
+    auto dg = divideMod(t * E, {g}, p).R;
+    auto dh = divideMod(s * E, {h}, p).R;
+    g += pk * dg;
+    h += pk * dh;
 
     // Bézout correction
-    Poly one(Monomial(f.leadingMonomial().size()), Integer(1));
-    Poly C = (one - s * g - t * h);
-    C /= pk;
-    Poly uu = s * C;
-    Poly vv = t * C;
-    DivisionResult<Integer, Order> divUU = divideMod(uu, {h}, p);
-    DivisionResult<Integer, Order> divVV = divideMod(vv, {g}, p);
-    Poly qq = divUU.Q[0];
-    Poly rr = divUU.R;
-    Poly ds = divVV.R;
-    Poly dt = rr + qq * g;
+    Poly C = (Poly(Monomial(f.leadingMonomial().size()), Integer(1)) - s * g - t * h) / pk;
+    auto ds = divideMod(t * C, {g}, p).R;
+    auto dt = divideMod(s * C, {h}, p).R;
     s += pk * ds;
     t += pk * dt;
+
+    // std::cout << "[DEBUG] end of henselPadicStep()" << std::endl;
+    // std::cout << "[DEBUG] deg(g): " << g.degree() << std::endl;
+    // std::cout << "[DEBUG] deg(h): " << h.degree() << std::endl;
 }
 
 template <class Integer, class Order>

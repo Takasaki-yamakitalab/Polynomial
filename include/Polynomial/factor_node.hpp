@@ -79,14 +79,12 @@ std::unique_ptr<FactorNode<Integer, Order>> buildFactorTree(const std::vector<Po
         }
         return node;
     }
-    size_t mid = (begin + end) / 2;
+    size_t mid = (begin + end + 1) / 2;
+    int p = factors[0].leadingCoefficient().modulus();
     node->left = buildFactorTree<Integer, Order>(factors, begin, mid);
     node->right = buildFactorTree<Integer, Order>(factors, mid, end);
-    // std::cout << "[DEBUG] before multiply" << std::endl;
     node->factor = node->left->factor * node->right->factor;
-    // std::cout << "[DEBUG] before extendedEuclid" << std::endl;
-    auto ee = extendedEuclid(node->left->factor, node->right->factor);
-    // std::cout << "[DEBUG] after extendedEuclid" << std::endl;
+    auto ee = extendedEuclidMod(node->left->factor, node->right->factor, p);
     node->s = ee.s;
     node->t = ee.t;
     return node;

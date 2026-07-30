@@ -42,13 +42,6 @@ std::vector<std::vector<ModInt>> nullSpace(std::vector<std::vector<ModInt>> A) {
         basis.push_back(v);
     }
 
-    // DEBUG
-    for (auto& v : basis) {
-        std::cout << "[DEBUG] basis:";
-        for (auto& x : v) std::cout << " " << x;
-        std::cout << '\n';
-    }
-
     return basis;
 }
 }  // namespace polynomial
