@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cassert>
+#include <ostream>
 
 namespace polynomial {
 
@@ -44,6 +45,16 @@ class Monomial {
         assert(index < m_exp.size());
         m_totalDegree += e - m_exp[index];
         m_exp[index] = e;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Monomial& m) {
+        os << "[";
+        for (size_t i = 0; i < m.size(); i++) {
+            os << m.exp(i);
+            if (i + 1 < m.size()) os << ",";
+        }
+        os << "]";
+        return os;
     }
 };
 

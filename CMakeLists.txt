@@ -13,18 +13,9 @@ endif()
 
 set(SRC
     src/coefficient.cpp
-    src/evaluation.cpp
     src/factor.cpp
-    src/factor_node.cpp
-    src/groebner_basis.cpp
-    src/groebner_basis_f4.cpp
-    src/hensel_lift_multivar.cpp
-    src/hensel_lift_padic.cpp
-    src/kronecker.cpp
     src/monomial.cpp
-    src/polynomial.cpp
     src/polynomial_order.cpp
-    src/term.cpp
     src/zassenhaus_recombine.cpp
 )
 
@@ -77,5 +68,5 @@ configure_package_config_file(
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake DESTINATION lib/cmake/${PROJECT_NAME})
 
 if(NOT ANDROID)
-    # add_subdirectory(example)
+    add_subdirectory(example)
 endif()

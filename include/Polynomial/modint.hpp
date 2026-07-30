@@ -7,26 +7,37 @@
 
 namespace polynomial {
 
-// P must be prime
-class ModInt {
-    int v;
-    static int P;
+struct ModContext {
+    inline static int P;
 
-   public:
+    static int modulus() {
+        return P;
+    };
     static void setMod(int p) {
         assert(p > 1);
         P = p;
     }
-    ModInt() : v(0) {}
+};
+
+// P must be prime
+class ModInt {
+    int v;
+    int P;
+
+   public:
+    void setMod(int p) {
+        assert(p > 1);
+        P = p;
+    }
+    ModInt() : v(0), P(ModContext::modulus()) {}
     template <class Integer>
-    ModInt(Integer value) {
+    ModInt(Integer value) : P(ModContext::modulus()) {
         int64_t x = value % P;
         if (x < 0) x += P;
         v = (int)x;
     }
 
     int value() const { return v; }
-    static int modulus() { return P; }
     bool isZero() const { return v == 0; }
     bool isOne() const { return v == 1; }
     static int modPow(int a, int64_t e, int p) {
@@ -73,12 +84,12 @@ class ModInt {
         return *this;
     }
 
-    bool operator==(const ModInt& b) const { return v == b.v; }
-    bool operator!=(const ModInt& b) const { return v != b.v; }
-    bool operator<(const ModInt& b) const { return v < b.v; }
-    bool operator>(const ModInt& b) const { return v > b.v; }
-    bool operator<=(const ModInt& b) const { return v <= b.v; }
-    bool operator>=(const ModInt& b) const { return v >= b.v; }
+    bool operator==(const ModInt& b) const { return P == b.P && v == b.v; }
+    bool operator!=(const ModInt& b) const { return P != b.P || v != b.v; }
+    bool operator<(const ModInt& b) const { return P == b.P && v < b.v; }
+    bool operator>(const ModInt& b) const { return P == b.P && v > b.v; }
+    bool operator<=(const ModInt& b) const { return P == b.P && v <= b.v; }
+    bool operator>=(const ModInt& b) const { return P == b.P && v >= b.v; }
 
     friend bool operator==(const ModInt& a, const int& b) { return a == ModInt(b); }
     friend bool operator==(const int& a, const ModInt& b) { return ModInt(a) == b; }
