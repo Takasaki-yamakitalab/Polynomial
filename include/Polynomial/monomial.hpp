@@ -1,5 +1,5 @@
-﻿#ifndef MONOMIAL_HPP
-#define MONOMIAL_HPP
+﻿#ifndef POLYNOMIAL_MONOMIAL_HPP
+#define POLYNOMIAL_MONOMIAL_HPP
 
 #include <vector>
 #include <cassert>

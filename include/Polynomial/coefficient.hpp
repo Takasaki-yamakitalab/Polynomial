@@ -1,5 +1,5 @@
-﻿#ifndef COEFFICIENT_HPP
-#define COEFFICIENT_HPP
+﻿#ifndef POLYNOMIAL_COEFFICIENT_HPP
+#define POLYNOMIAL_COEFFICIENT_HPP
 
 #include <vector>
 

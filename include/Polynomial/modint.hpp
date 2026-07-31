@@ -1,5 +1,5 @@
-﻿#ifndef MODINT_HPP
-#define MODINT_HPP
+﻿#ifndef POLYNOMIAL_MODINT_HPP
+#define POLYNOMIAL_MODINT_HPP
 
 #include <ostream>
 #include <cassert>

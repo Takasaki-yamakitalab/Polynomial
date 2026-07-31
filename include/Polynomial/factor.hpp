@@ -1,5 +1,5 @@
-﻿#ifndef FACTOR_HPP
-#define FACTOR_HPP
+﻿#ifndef POLYNOMIAL_FACTOR_HPP
+#define POLYNOMIAL_FACTOR_HPP
 
 #include <vector>
 #include "modint.hpp"

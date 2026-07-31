@@ -1,5 +1,5 @@
-﻿#ifndef MONOMIAL_ORDER_HPP
-#define MONOMIAL_ORDER_HPP
+﻿#ifndef POLYNOMIAL_MONOMIAL_ORDER_HPP
+#define POLYNOMIAL_MONOMIAL_ORDER_HPP
 
 #include "monomial.hpp"
 

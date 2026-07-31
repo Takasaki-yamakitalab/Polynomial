@@ -1,5 +1,5 @@
-﻿#ifndef GROEBNER_F4_HPP
-#define GROebner_F4_HPP
+﻿#ifndef POLYNOMIAL_GROEBNER_F4_HPP
+#define POLYNOMIAL_GROEBNER_F4_HPP
 
 #include "polynomial.hpp"
 #include <set>

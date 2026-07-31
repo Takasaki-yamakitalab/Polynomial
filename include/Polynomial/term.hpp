@@ -1,5 +1,5 @@
-﻿#ifndef TERM_HPP
-#define TERM_HPP
+﻿#ifndef POLYNOMIAL_TERM_HPP
+#define POLYNOMIAL_TERM_HPP
 
 #include "monomial.hpp"
 

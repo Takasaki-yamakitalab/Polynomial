@@ -1,5 +1,5 @@
-﻿#ifndef EVALUATION_HPP
-#define EVALUATION_HPP
+﻿#ifndef POLYNOMIAL_EVALUATION_HPP
+#define POLYNOMIAL_EVALUATION_HPP
 
 #include "polynomial.hpp"
 #include <random>

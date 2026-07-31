@@ -1,5 +1,5 @@
-﻿#ifndef HENSEL_LIFT_MULTIVAR_HPP
-#define HENSEL_LIFT_MULTIVAR_HPP
+﻿#ifndef POLYNOMIAL_HENSEL_LIFT_MULTIVAR_HPP
+#define POLYNOMIAL_HENSEL_LIFT_MULTIVAR_HPP
 
 #include "polynomial.hpp"
 #include "factor_node.hpp"

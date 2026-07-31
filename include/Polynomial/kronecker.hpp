@@ -1,5 +1,5 @@
-﻿#ifndef KRONECKER_HPP
-#define KRONECKER_HPP
+﻿#ifndef POLYNOMIAL_KRONECKER_HPP
+#define POLYNOMIAL_KRONECKER_HPP
 
 #include "polynomial.hpp"
 #include <algorithm>

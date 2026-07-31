@@ -1,5 +1,5 @@
-﻿#ifndef GROEBNER_BASIS_HPP
-#define GROEBNER_BASIS_HPP
+﻿#ifndef POLYNOMIAL_GROEBNER_BASIS_HPP
+#define POLYNOMIAL_GROEBNER_BASIS_HPP
 
 #include "polynomial.hpp"
 #include <deque>

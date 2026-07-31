@@ -1,5 +1,5 @@
-﻿#ifndef FACTOR_NODE_HPP
-#define FACTOR_NODE_HPP
+﻿#ifndef POLYNOMIAL_FACTOR_NODE_HPP
+#define POLYNOMIAL_FACTOR_NODE_HPP
 
 #include "polynomial.hpp"
 

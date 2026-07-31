@@ -1,5 +1,5 @@
-#ifndef POLYNOMIAL_HPP
-#define POLYNOMIAL_HPP
+#ifndef POLYNOMIAL_POLYNOMIAL_HPP
+#define POLYNOMIAL_POLYNOMIAL_HPP
 
 #include <map>
 #include "monomial.hpp"
@@ -63,7 +63,7 @@ struct Polynomial {
     }
 };
 
-template <class Coef, class Order = GrevLexOrder>
+template <class Coef, class Order = LexOrder>
 struct DivisionResult {
     std::vector<Polynomial<Coef, Order>> Q;
     Polynomial<Coef, Order> R;
