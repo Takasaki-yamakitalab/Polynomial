@@ -102,7 +102,7 @@ std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Inte
     std::vector<Poly> ret;
     Poly f = origin;
     Integer multiplier(1);
-    std::cout << "[DEBUG] origin: " << origin << std::endl;
+    // std::cout << "[DEBUG] origin: " << origin << std::endl;
 
     for (int k = 1; k < (int)factors.size(); k++) {
         std::vector<std::vector<int>> subsets;
@@ -110,9 +110,9 @@ std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Inte
         for (auto& s : subsets) {
             if (s.empty()) continue;
 
-            std::cout << "[DEBUG] s: ";
-            for (auto& i : s) std::cout << i << " ";
-            std::cout << std::endl;
+            // std::cout << "[DEBUG] s: ";
+            // for (auto& i : s) std::cout << i << " ";
+            // std::cout << std::endl;
 
             Poly uf(Monomial(var_num), Integer(1));
             for (auto& i : s)

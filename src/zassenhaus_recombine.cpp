@@ -27,8 +27,8 @@ void enumerateSubset(std::vector<std::vector<int>>& dst, const std::vector<bool>
         }
         return;
     }
-    std::cout << "[DEBUG] need: " << need << std::endl;
-    std::cout << "[DEBUG] available: " << available << std::endl;
+    // std::cout << "[DEBUG] need: " << need << std::endl;
+    // std::cout << "[DEBUG] available: " << available << std::endl;
     std::vector<int> cur;
     enumerateSubsetImpl(0, need, cur, dst, available, exclude);
     return;

@@ -515,7 +515,7 @@ DivisionResult<Integer, Order> pseudoDivide(Polynomial<Integer, Order> f, const 
     using Poly = Polynomial<Integer, Order>;
     DivisionResult<Integer, Order> ret;
     assert(!g.isZero());
-    std::cout << "[DEBUG] pseudoDivide(" << f << ", " << g << ")" << std::endl;
+    // std::cout << "[DEBUG] pseudoDivide(" << f << ", " << g << ")" << std::endl;
 
     Poly R = f;
     Poly Q;
@@ -553,7 +553,7 @@ Polynomial<Integer, Order> pseudoRemainder(const Polynomial<Integer, Order>& f, 
                                            const int& var) {
     using Poly = Polynomial<Integer, Order>;
     assert(!g.isZero());
-    std::cout << "[DEBUG] pseudoRemainder(" << f << ", " << g << ", " << var << ")" << std::endl;
+    // std::cout << "[DEBUG] pseudoRemainder(" << f << ", " << g << ", " << var << ")" << std::endl;
 
     Poly R = f;
 
@@ -631,9 +631,9 @@ static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Poly
     auto c = coefficientGCD(content(f), content(g));
     while (!g.isZero()) {
         Poly r = pseudoRemainder(f, g, var);
-        std::cout << "[DEBUG] r: " << r << "\n";
-        std::cout << "[DEBUG] isZero: " << r.isZero() << "\n";
-        std::cout << "[DEBUG] size: " << r.terms.size() << "\n";
+        // std::cout << "[DEBUG] r: " << r << "\n";
+        // std::cout << "[DEBUG] isZero: " << r.isZero() << "\n";
+        // std::cout << "[DEBUG] size: " << r.terms.size() << "\n";
         r = primitivePartMultiVar(r, var);
         f = g;
         g = r;
@@ -1006,11 +1006,11 @@ int findGoodPrime(const Polynomial<int, Order>& f) {
 
         auto df = derivativeMod(f, p);
 
-        std::cout << "[DEBUG] p: " << p << std::endl;
-        std::cout << "[DEBUG] fp: " << fp << std::endl;
-        std::cout << "[DEBUG] df: " << df << std::endl;
+        // std::cout << "[DEBUG] p: " << p << std::endl;
+        // std::cout << "[DEBUG] fp: " << fp << std::endl;
+        // std::cout << "[DEBUG] df: " << df << std::endl;
         auto g = polynomialGCD(fp, df);
-        std::cout << "[DEBUG] gcd: " << g << std::endl;
+        // std::cout << "[DEBUG] gcd: " << g << std::endl;
 
         // square-free
         if (g.isConstant()) return p;

@@ -36,14 +36,14 @@ template <class Coef, class Order>
 std::vector<SquareFreeFactor<Coef, Order>> squareFreeDecomposition(Polynomial<Coef, Order> f) {
     using Poly = Polynomial<Coef, Order>;
     std::vector<SquareFreeFactor<Coef, Order>> ans;
-    std::cout << "[DEBUG] squareFreeDecomposition(" << f << ")" << std::endl;
+    // std::cout << "[DEBUG] squareFreeDecomposition(" << f << ")" << std::endl;
 
-    std::cout << "[DEBUG] call multiDerivativeGCD() from squareFreeDecomposition()" << std::endl;
+    // std::cout << "[DEBUG] call multiDerivativeGCD() from squareFreeDecomposition()" << std::endl;
     Poly g = multiDerivativeGCD(f);
-    std::cout << "[DEBUG] return squareFreeDecomposition()" << std::endl;
-    std::cout << "[DEBUG] call divide() from squareFreeDecomposition()" << std::endl;
+    // std::cout << "[DEBUG] return squareFreeDecomposition()" << std::endl;
+    // std::cout << "[DEBUG] call divide() from squareFreeDecomposition()" << std::endl;
     Poly w = divide(f, {g}).Q[0];
-    std::cout << "[DEBUG] return squareFreeDecomposition()" << std::endl;
+    // std::cout << "[DEBUG] return squareFreeDecomposition()" << std::endl;
 
     uint64_t i = 1;
     while (!w.isConstant()) {
@@ -84,12 +84,12 @@ std::vector<std::vector<ModInt>> berlekampMatrix(const Polynomial<ModInt, Order>
     for (int i = 0; i < n; i++) {
         Q[i][i] -= 1;
     }
-    std::cout << "[DEBUG] Q-I:\n";
-    for (int i = 0; i < n; ++i) {
-        std::cout << "  ";
-        for (int j = 0; j < n; ++j) std::cout << Q[i][j] << ' ';
-        std::cout << std::endl;
-    }
+    // std::cout << "[DEBUG] Q-I:\n";
+    // for (int i = 0; i < n; ++i) {
+    //     std::cout << "  ";
+    //     for (int j = 0; j < n; ++j) std::cout << Q[i][j] << ' ';
+    //     std::cout << std::endl;
+    // }
 
     return Q;
 }
@@ -126,13 +126,13 @@ std::vector<Polynomial<ModInt, Order>> berlekampFactor(Polynomial<ModInt, Order>
     if (f.degree(0) <= 1) return {f};
 
     auto basis = nullSpace(berlekampMatrix(f));
-    std::cout << "[DEBUG] factoring: " << f << std::endl;
-    std::cout << "[DEBUG] basis size: " << basis.size() << std::endl;
-    for (auto& v : basis) {
-        std::cout << "[DEBUG] basis: ";
-        for (auto& x : v) std::cout << x << " ";
-        std::cout << std::endl;
-    }
+    // std::cout << "[DEBUG] factoring: " << f << std::endl;
+    // std::cout << "[DEBUG] basis size: " << basis.size() << std::endl;
+    // for (auto& v : basis) {
+    //     std::cout << "[DEBUG] basis: ";
+    //     for (auto& x : v) std::cout << x << " ";
+    //     std::cout << std::endl;
+    // }
 
     if (basis.size() == 1) {
         ret.push_back(f);
@@ -145,17 +145,17 @@ std::vector<Polynomial<ModInt, Order>> berlekampFactor(Polynomial<ModInt, Order>
         do {
             h = randomBerlekampPolynomial(basisPoly, rng);
         } while (h.isZero());
-        std::cout << "[DEBUG] h: " << h << " (at trial: " << trial << ")" << std::endl;
+        // std::cout << "[DEBUG] h: " << h << " (at trial: " << trial << ")" << std::endl;
         for (int a = 0; a < ModContext::modulus(); a++) {
             auto t = h;
             t.addTerm(Monomial(1), -ModInt(a));
             if (t.isConstant()) continue;
             auto g = polynomialGCD(f, t);
-            std::cout << "[DEBUG] a: " << a << " gcd: " << g << std::endl;
+            // std::cout << "[DEBUG] a: " << a << " gcd: " << g << std::endl;
             if (!g.isConstant() && g != f) {
                 auto div = divide(f, {g});
-                std::cout << "[DEBUG] Q: " << div.Q[0] << std::endl;
-                std::cout << "[DEBUG] R: " << div.R << std::endl;
+                // std::cout << "[DEBUG] Q: " << div.Q[0] << std::endl;
+                // std::cout << "[DEBUG] R: " << div.R << std::endl;
                 assert(div.R.isZero());
                 auto left = berlekampFactor(g, rng);
                 auto right = berlekampFactor(div.Q[0], rng);
@@ -172,35 +172,35 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     using Poly = Polynomial<Integer, LexOrder>;
     if (f.degree() == 1) return {f};
 
-    std::cout << "[DEBUG] factorUniVar(" << f << ")" << std::endl;
-    std::cout << "[DEBUG] before findGoodPrime" << std::endl;
+    // std::cout << "[DEBUG] factorUniVar(" << f << ")" << std::endl;
+    // std::cout << "[DEBUG] before findGoodPrime" << std::endl;
     int p = findGoodPrime(f);
-    std::cout << "[DEBUG] p: " << p << std::endl;
+    // std::cout << "[DEBUG] p: " << p << std::endl;
     Polynomial<ModInt, LexOrder> fp = modPolynomial(f, p);
-    std::cout << "[DEBUG] fp: " << fp << std::endl;
+    // std::cout << "[DEBUG] fp: " << fp << std::endl;
 
     // 有限体因数分解 (Berlekamp)
     std::mt19937 rng(std::random_device{}());
-    std::cout << "[DEBUG] call barlekampFactor() from factorUniVar()" << std::endl;
+    // std::cout << "[DEBUG] call barlekampFactor() from factorUniVar()" << std::endl;
     std::vector<Polynomial<ModInt, LexOrder>> modFactors = berlekampFactor(fp, rng);
-    std::cout << "[DEBUG] return factorUniVar() from barlekampFactor()" << std::endl;
+    // std::cout << "[DEBUG] return factorUniVar() from barlekampFactor()" << std::endl;
 
     // Hensel lifting
-    std::cout << "[DEBUG] call buildFactorTree() from factorUniVar()" << std::endl;
+    // std::cout << "[DEBUG] call buildFactorTree() from factorUniVar()" << std::endl;
     auto root = buildFactorTree<Integer>(modFactors, 0, modFactors.size());
-    std::cout << "[DEBUG] return factorUniVar() from buildFactorTree()" << std::endl;
+    // std::cout << "[DEBUG] return factorUniVar() from buildFactorTree()" << std::endl;
     const int bound = henselBound(f);
     int pk = p;
     while (pk < bound) {
-        std::cout << "[DEBUG] call henselPadicTree() from factorUniVar()" << std::endl;
+        // std::cout << "[DEBUG] call henselPadicTree() from factorUniVar()" << std::endl;
         henselPadicTree(f, *root, pk, p);
-        std::cout << "[DEBUG] return factorUniVar() from henselPadicTree()" << std::endl;
+        // std::cout << "[DEBUG] return factorUniVar() from henselPadicTree()" << std::endl;
         pk *= pk;
     }
     std::vector<Poly> lifted;
-    std::cout << "[DEBUG] call collectLeaves() from factorUniVar()" << std::endl;
+    // std::cout << "[DEBUG] call collectLeaves() from factorUniVar()" << std::endl;
     collectLeaves(*root, lifted);
-    std::cout << "[DEBUG] return factorUniVar() from collectLeaves()" << std::endl;
+    // std::cout << "[DEBUG] return factorUniVar() from collectLeaves()" << std::endl;
 
     // DEBUG
     // {
@@ -211,21 +211,21 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     // }
 
     // Recombine (Zassenhaus method)
-    std::cout << "[DEBUG] call centerLiftAll() from factorUniVar()" << std::endl;
+    // std::cout << "[DEBUG] call centerLiftAll() from factorUniVar()" << std::endl;
     lifted = centerLiftAll(lifted, pk);
-    std::cout << "[DEBUG] return factorUniVar() from centerLiftAll()" << std::endl;
-    std::cout << "[DEBUG] lifted factors:" << std::endl;
-    for (auto& g : lifted) std::cout << "  " << g << std::endl;
-    std::cout << "[DEBUG] call zassenhausRecombine() from factorUniVar()" << std::endl;
+    // std::cout << "[DEBUG] return factorUniVar() from centerLiftAll()" << std::endl;
+    // std::cout << "[DEBUG] lifted factors:" << std::endl;
+    // for (auto& g : lifted) std::cout << "  " << g << std::endl;
+    // std::cout << "[DEBUG] call zassenhausRecombine() from factorUniVar()" << std::endl;
     auto ret = zassenhausRecombine(f, lifted);
-    std::cout << "[DEBUG] return factorUniVar() from zassenhausRecombine()" << std::endl;
+    // std::cout << "[DEBUG] return factorUniVar() from zassenhausRecombine()" << std::endl;
     return ret;
 }
 
 template <class Integer, class Order>
 std::vector<Polynomial<Integer, Order>> factorSquareFree(Polynomial<Integer, Order> f) {
     using Poly = Polynomial<Integer, LexOrder>;
-    std::cout << "[DEBUG] factorSquareFree(" << f << ")" << std::endl;
+    // std::cout << "[DEBUG] factorSquareFree(" << f << ")" << std::endl;
 
     if (f.isConstant()) return {f};
     if (f.degree() == 1) return {f};
@@ -238,15 +238,15 @@ std::vector<Polynomial<Integer, Order>> factorSquareFree(Polynomial<Integer, Ord
     }
     Polynomial<Integer, LexOrder> kroneckerShift(Monomial(1, min_n), Integer(1));
     univarPoly = divide(univarPoly, {kroneckerShift}).Q[0];
-    std::cout << "[DEBUG] B: " << B << std::endl;
-    std::cout << "[DEBUG] g: " << univarPoly << std::endl;
-    std::cout << "[DEBUG] Kronecker shift: " << kroneckerShift << std::endl;
+    // std::cout << "[DEBUG] B: " << B << std::endl;
+    // std::cout << "[DEBUG] g: " << univarPoly << std::endl;
+    // std::cout << "[DEBUG] Kronecker shift: " << kroneckerShift << std::endl;
 
     std::vector<Polynomial<Integer, LexOrder>> univarFactors = factorUniVar(univarPoly);
     for (int i = 0; i < min_n; i++) {
         univarFactors.push_back(Poly(Monomial(1, 1), Integer(1)));
     }
-    for (auto& fact : univarFactors) std::cout << "[DEBUG] univarFactors: " << fact << std::endl;
+    // for (auto& fact : univarFactors) std::cout << "[DEBUG] univarFactors: " << fact << std::endl;
 
     // univarFactors = inverseKroneckerAll(univarFactors, B, f.leadingMonomial().size());
     std::vector<bool> is_used(univarFactors.size(), false);
@@ -265,7 +265,7 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
     Poly cont(monomialContent(f), content(f));
     f = divide(f, {cont}).Q[0];
     if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
-        std::cout << "[DEBUG] content: " << cont << std::endl;
+        // std::cout << "[DEBUG] content: " << cont << std::endl;
         ans.push_back({cont, 1});
     }
 
@@ -277,7 +277,7 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
         auto factors = factorSquareFree(sqf.poly);
         for (auto& h : factors) {
             ans.push_back({h, sqf.multiplicity});
-            std::cout << "[DEBUG] factor: " << h << std::endl;
+            // std::cout << "[DEBUG] factor: " << h << std::endl;
         }
     }
     return ans;

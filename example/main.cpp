@@ -3,6 +3,7 @@
 #include <Polynomial/zassenhaus_recombine.hpp>
 
 #include <iostream>
+#include "Polynomial/monomial.hpp"
 
 int main() {
     // std::vector<std::vector<int>> dst;
@@ -35,24 +36,30 @@ int main() {
     poly3.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 1}), 7);
     poly3.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 2}), 3);
 
-    std::cout << poly1 << std::endl;
+    std::cout << "TEST 1" << std::endl;
+    std::cout << "ORIGIN: " << poly1 << std::endl;
     auto ans1 = polynomial::factorize(poly1);
+    std::cout << "FACTORIZED: ";
     for (size_t i = 0; i < ans1.size(); i++) {
         std::cout << "(" << ans1[i].first << ")^(" << ans1[i].second << ")";
         if (i + 1 < ans1.size()) std::cout << "*";
     }
     std::cout << std::endl;
 
-    std::cout << poly2 << std::endl;
+    std::cout << "TEST 2" << std::endl;
+    std::cout << "ORIGIN: " << poly2 << std::endl;
     auto ans2 = polynomial::factorize(poly2);
+    std::cout << "FACTORIZED: ";
     for (size_t i = 0; i < ans2.size(); i++) {
         std::cout << "(" << ans2[i].first << ")^(" << ans2[i].second << ")";
         if (i + 1 < ans2.size()) std::cout << "*";
     }
     std::cout << std::endl;
 
-    std::cout << poly3 << std::endl;
+    std::cout << "TEST 3" << std::endl;
+    std::cout << "ORIGIN: " << poly3 << std::endl;
     auto ans3 = polynomial::factorize(poly3);
+    std::cout << "FACTORIZED: ";
     for (size_t i = 0; i < ans3.size(); i++) {
         std::cout << "(" << ans3[i].first << ")^(" << ans3[i].second << ")";
         if (i + 1 < ans3.size()) std::cout << "*";
