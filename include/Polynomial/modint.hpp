@@ -28,6 +28,8 @@ class ModInt {
     void setMod(int p) {
         assert(p > 1);
         P = p;
+        v = v % P;
+        if (v < 0) v += P;
     }
     ModInt() : v(0), P(ModContext::modulus()) {}
     template <class Integer>

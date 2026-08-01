@@ -1,13 +1,30 @@
 ﻿#include <Polynomial/polynomial.hpp>
 #include <Polynomial/factor.hpp>
+#include <Polynomial/zassenhaus_recombine.hpp>
 
 #include <iostream>
 
 int main() {
+    // std::vector<std::vector<int>> dst;
+    // std::vector<bool> exclude(10, false);
+    // exclude[4] = true;
+    // exclude[5] = true;
+    // exclude[6] = true;
+    // std::cout << "exclude: ";
+    // for (auto b : exclude) {
+    //     std::cout << b << " ";
+    // }
+    // std::cout << std::endl;
+    // polynomial::enumerateSubset(dst, exclude, 3);
+    // for (auto& v : dst) {
+    //     std::cout << "subset: ";
+    //     for (auto& i : v) std::cout << i << " ";
+    //     std::cout << std::endl;
+    // }
+    // return 0;
     polynomial::Polynomial<int> poly1;
-    poly1.addTerm(polynomial::Monomial(1, 2), 1);
-    poly1.addTerm(polynomial::Monomial(1, 1), 5);
-    poly1.addTerm(polynomial::Monomial(1, 0), 6);
+    poly1.addTerm(polynomial::Monomial(1, 3), 1);
+    poly1.addTerm(polynomial::Monomial(1, 0), 1);
     polynomial::Polynomial<int> poly2;
     poly2.addTerm(polynomial::Monomial(1, 3), 1);
     poly2.addTerm(polynomial::Monomial(1, 2), 6);
@@ -26,21 +43,21 @@ int main() {
     }
     std::cout << std::endl;
 
-    // std::cout << poly2 << std::endl;
-    // auto ans2 = polynomial::factorize(poly2);
-    // for (size_t i = 0; i < ans2.size(); i++) {
-    //     std::cout << "(" << ans2[i].first << ")^(" << ans2[i].second << ")";
-    //     if (i + 1 < ans2.size()) std::cout << "*";
-    // }
-    // std::cout << std::endl;
-    //
-    // std::cout << poly3 << std::endl;
-    // auto ans3 = polynomial::factorize(poly3);
-    // for (size_t i = 0; i < ans3.size(); i++) {
-    //     std::cout << "(" << ans3[i].first << ")^(" << ans3[i].second << ")";
-    //     if (i + 1 < ans3.size()) std::cout << "*";
-    // }
-    // std::cout << std::endl;
+    std::cout << poly2 << std::endl;
+    auto ans2 = polynomial::factorize(poly2);
+    for (size_t i = 0; i < ans2.size(); i++) {
+        std::cout << "(" << ans2[i].first << ")^(" << ans2[i].second << ")";
+        if (i + 1 < ans2.size()) std::cout << "*";
+    }
+    std::cout << std::endl;
+
+    std::cout << poly3 << std::endl;
+    auto ans3 = polynomial::factorize(poly3);
+    for (size_t i = 0; i < ans3.size(); i++) {
+        std::cout << "(" << ans3[i].first << ")^(" << ans3[i].second << ")";
+        if (i + 1 < ans3.size()) std::cout << "*";
+    }
+    std::cout << std::endl;
 
     return 0;
 }

@@ -12,7 +12,9 @@ template <class Integer, class Order>
 std::vector<Polynomial<Integer, Order>> centerLiftAll(const std::vector<Polynomial<Integer, Order>>& F,
                                                       int64_t modulus);
 
-void enumerateSubset(int pos, int need, std::vector<int>& cur, std::vector<std::vector<int>>& ans, int n);
+void enumerateSubsetImpl(int pos, int need, std::vector<int>& cur, std::vector<std::vector<int>>& ans, int n,
+                         const std::vector<bool>& exclude);
+void enumerateSubset(std::vector<std::vector<int>>& dst, const std::vector<bool>& exclude, int need);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> productSubset(const std::vector<Polynomial<Coef, Order>>& factors,
@@ -22,13 +24,13 @@ template <class Coef, class Order>
 std::vector<Polynomial<Coef, Order>> zassenhausRecombine(Polynomial<Coef, Order> f,
                                                          std::vector<Polynomial<Coef, Order>> lifted);
 
-
 template <class Integer, class Order>
 Polynomial<Integer, Order> centerLift(const Polynomial<Integer, Order>& f, int64_t modulus) {
     Polynomial<Integer, Order> g;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
         Integer c = it->second % Integer(modulus);
         if (c > modulus / 2) c -= modulus;
+        if (c < -modulus / 2) c += modulus;
         g.addTerm(it->first, c);
     }
     return g;
@@ -65,12 +67,17 @@ std::vector<Polynomial<Coef, Order>> zassenhausRecombine(Polynomial<Coef, Order>
         for (int k = 1; k <= m / 2 && !found; k++) {
             std::vector<std::vector<int>> subsets;
             std::vector<int> cur;
-            enumerateSubset(0, k, cur, subsets, m);
+            std::vector<bool> exclude(m, false);
+            enumerateSubsetImpl(0, k, cur, subsets, m, exclude);
             for (size_t i = 0; i < subsets.size(); i++) {
                 Poly g = productSubset(lifted, subsets[i]);
-                if (!isFactor(f, g)) continue;
-                result.push_back(g);
-                f = divide(f, {g}).Q[0];
+                // if (!isFactor(f, g)) continue;
+                // result.push_back(g);
+                // f = divide(f, {g}).Q[0];
+                Poly d = primitivePart(polynomialGCD(f, g));
+                if (d.degree() <= 0 || d == f) continue;
+                result.push_back(d);
+                f = primitivePart(divide(f, {d}).Q[0]);
                 std::vector<Poly> remain;
                 for (int j = 0; j < m; j++) {
                     if (std::find(subsets[i].begin(), subsets[i].end(), j) == subsets[i].end())

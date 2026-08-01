@@ -27,12 +27,17 @@ struct Polynomial {
     int64_t degree() const;
     int64_t degree(const int& var) const;
     Term<Coef> leadingTerm() const;
+    Term<Coef> leadingTerm(const int& var) const;
     const Monomial& leadingMonomial() const;
+    const Monomial& leadingMonomial(const int& var) const;
     const Coef& leadingCoefficient() const;
+    const Coef& leadingCoefficient(const int& var) const;
     int64_t leadingDegree() const;
     Coef coefficient(const Monomial& m) const;
     void eraseLeadingTerm();
+    void eraseLeadingTerm(const int& var);
     Term<Coef> popLeadingTerm();
+    Term<Coef> popLeadingTerm(const int& var);
     Polynomial<Coef, Order> leadingPolynomial() const;
     void normalize();
     void clear();
@@ -107,6 +112,8 @@ DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std
                                          const int p);
 template <class Coef, class Order>
 Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p);
+template <class Integer, class Order>
+Polynomial<Integer, Order> primitivePartMultiVar(Polynomial<Integer, Order> p, const int& var);
 template <class Coef, class Order>
 Polynomial<Coef, Order> pow(Polynomial<Coef, Order> p, int64_t e);
 template <class Coef, class Order>
@@ -115,11 +122,14 @@ template <class Coef, class Order>
 Polynomial<Coef, Order> substitute(const Polynomial<Coef, Order>& f, int var, const Coef& value);
 template <class Coef, class Order>
 Polynomial<Coef, Order> substitute(Polynomial<Coef, Order> f, const std::vector<Polynomial<Coef, Order>>& g);
-template <class Coef, class Order>
-DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g);
+template <class Integer, class Order>
+DivisionResult<Integer, Order> pseudoDivide(Polynomial<Integer, Order> f, const Polynomial<Integer, Order>& g);
 
-template <class Coef, class Order>
-Polynomial<Coef, Order> pseudoRemainder(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
+template <class Integer, class Order>
+Polynomial<Integer, Order> pseudoRemainder(const Polynomial<Integer, Order>& f, const Polynomial<Integer, Order>& g);
+template <class Integer, class Order>
+Polynomial<Integer, Order> pseudoRemainder(const Polynomial<Integer, Order>& f, const Polynomial<Integer, Order>& g,
+                                           const int& var);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> polynomialRemainder(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g);
@@ -160,6 +170,8 @@ bool isFactor(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g
 
 template <class Coef, class Order>
 Coef content(const Polynomial<Coef, Order>& f);
+template <class Integer, class Order>
+Polynomial<Integer, Order> contentMultiVar(const Polynomial<Integer, Order>& f, size_t var);
 
 template <class Coef, class Order>
 Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p);
@@ -174,6 +186,9 @@ Polynomial<ModInt, Order> powModPolynomial(Polynomial<ModInt, Order> a, int64_t 
                                            const Polynomial<ModInt, Order>& mod);
 template <class Order>
 Polynomial<ModInt, Order> frobenius(const Polynomial<ModInt, Order>& g, const Polynomial<ModInt, Order>& f);
+
+template <class Coef, class Order>
+Monomial monomialContent(const Polynomial<Coef, Order>& f);
 
 template <class Coef, class Order>
 bool Polynomial<Coef, Order>::isZero() const {
@@ -486,11 +501,19 @@ Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p) {
     if (p.leadingCoefficient() < Coef(0)) p = -p;
     return p;
 }
+template <class Integer, class Order>
+Polynomial<Integer, Order> primitivePartMultiVar(Polynomial<Integer, Order> p, const int& var) {
+    if (p.isZero()) return p;
+    auto cont = contentMultiVar(p, var);
+    // if (cont.divides(p)) return p / cont;
+    // return p;
+    return divide(p, {cont}).Q[0];
+}
 
-template <class Coef, class Order>
-DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g) {
-    using Poly = Polynomial<Coef, Order>;
-    DivisionResult<Coef, Order> ret;
+template <class Integer, class Order>
+DivisionResult<Integer, Order> pseudoDivide(Polynomial<Integer, Order> f, const Polynomial<Integer, Order>& g) {
+    using Poly = Polynomial<Integer, Order>;
+    DivisionResult<Integer, Order> ret;
     assert(!g.isZero());
     std::cout << "[DEBUG] pseudoDivide(" << f << ", " << g << ")" << std::endl;
 
@@ -503,13 +526,13 @@ DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polyno
         return ret;
     }
 
-    Coef c = g.leadingCoefficient();
-    Coef multiplier = Coef(1);
+    Integer c = g.leadingCoefficient();
+    Integer multiplier = Integer(1);
     while (!R.isZero() && R.degree() >= g.degree()) {
         if (!g.leadingMonomial().divides(R.leadingMonomial())) break;
         Monomial u = R.leadingMonomial() / g.leadingMonomial();
-        Coef a = R.leadingCoefficient();
-        Term<Coef> t{u, a};
+        Integer a = R.leadingCoefficient();
+        Term<Integer> t{u, a};
         Q *= c;
         Q += t;
         R *= c;
@@ -521,9 +544,36 @@ DivisionResult<Coef, Order> pseudoDivide(Polynomial<Coef, Order> f, const Polyno
     ret.multiplier = multiplier;
     return ret;
 }
-template <class Coef, class Order>
-Polynomial<Coef, Order> pseudoRemainder(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g) {
+template <class Integer, class Order>
+Polynomial<Integer, Order> pseudoRemainder(const Polynomial<Integer, Order>& f, const Polynomial<Integer, Order>& g) {
     return pseudoDivide(f, g).R;
+}
+template <class Integer, class Order>
+Polynomial<Integer, Order> pseudoRemainder(const Polynomial<Integer, Order>& f, const Polynomial<Integer, Order>& g,
+                                           const int& var) {
+    using Poly = Polynomial<Integer, Order>;
+    assert(!g.isZero());
+    std::cout << "[DEBUG] pseudoRemainder(" << f << ", " << g << ", " << var << ")" << std::endl;
+
+    Poly R = f;
+
+    if (f.degree(var) < g.degree(var)) {
+        return f;
+    }
+
+    Term<Integer> c = g.leadingTerm(var);
+    c.mono.set_exp(var, 0);
+    while (!R.isZero() && R.degree(var) >= g.degree(var)) {
+        // if (!g.leadingMonomial(var).divides(R.leadingMonomial(var))) break;
+        // Monomial u = R.leadingMonomial(var) / g.leadingMonomial(var);
+        // Integer a = R.leadingCoefficient(var);
+        // Term<Integer> t{u, a};
+        Term<Integer> t = R.leadingTerm(var);
+        t.mono.add_exp(var, -g.degree(var));
+        R *= c;
+        R -= g * t;
+    }
+    return R;
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order> polynomialRemainder(Polynomial<Coef, Order> f, const Polynomial<Coef, Order>& g) {
@@ -575,21 +625,20 @@ static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Poly
                                                  std::false_type) {
     // 整数係数
     using Poly = Polynomial<Coef, Order>;
-    if (g.isZero()) return primitivePart(f);
-
     size_t var = selectLowDegVar(std::vector{f, g});
+    if (g.isZero()) return primitivePartMultiVar(f, var);
 
-    Coef c = coefficientGCD(content(f), content(g));
+    auto c = coefficientGCD(content(f), content(g));
     while (!g.isZero()) {
-        Poly r = pseudoRemainder(f, g);
+        Poly r = pseudoRemainder(f, g, var);
         std::cout << "[DEBUG] r: " << r << "\n";
         std::cout << "[DEBUG] isZero: " << r.isZero() << "\n";
         std::cout << "[DEBUG] size: " << r.terms.size() << "\n";
-        r = primitivePart(r);
+        r = primitivePartMultiVar(r, var);
         f = g;
         g = r;
     }
-    return c * primitivePart(f);
+    return c * primitivePartMultiVar(f, var);
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order> polynomialGCD(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g) {
@@ -900,6 +949,23 @@ template <class Coef, class Order>
 Coef content(const Polynomial<Coef, Order>& f) {
     return contentImpl(f, std::integral_constant<bool, coefficient_traits<Coef>::is_field>());
 }
+template <class Integer, class Order>
+Polynomial<Integer, Order> contentMultiVar(const Polynomial<Integer, Order>& f, size_t var) {
+    if (f.isZero()) return f;
+    Integer c = content(f);
+    const size_t N = f.leadingMonomial().size();
+    Monomial gcd(f.leadingMonomial().size());
+    for (size_t i = 0; i < N; i++) {
+        if (i == var) continue;
+        int64_t e = f.degree(i);
+        for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
+            if (it->first[i] < e) e = it->first[i];
+        }
+        gcd.set_exp(i, e);
+    }
+    Polynomial<Integer, Order> cont(gcd, c);
+    return cont;
+}
 
 template <class Coef, class Order>
 Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p) {
@@ -989,16 +1055,55 @@ Term<Coef> Polynomial<Coef, Order>::leadingTerm() const {
     return {it->first, it->second};
 }
 template <class Coef, class Order>
+Term<Coef> Polynomial<Coef, Order>::leadingTerm(const int& var) const {
+    assert(!terms.empty());
+    int64_t max_n = 0;
+    auto ret = terms.begin();
+    for (auto it = ret; it != terms.end(); it++) {
+        if (it->first[var] > max_n) {
+            ret = it;
+            max_n = it->first[var];
+        }
+    }
+    return {ret->first, ret->second};
+}
+template <class Coef, class Order>
 const Monomial& Polynomial<Coef, Order>::leadingMonomial() const {
     assert(!terms.empty());
     if (std::is_same<Order, GrevLexOrder>::value) return terms.begin()->first;
     return std::prev(terms.end())->first;
 }
 template <class Coef, class Order>
+const Monomial& Polynomial<Coef, Order>::leadingMonomial(const int& var) const {
+    assert(!terms.empty());
+    int64_t max_n = 0;
+    auto ret = terms.begin();
+    for (auto it = ret; it != terms.end(); it++) {
+        if (it->first[var] > max_n) {
+            ret = it;
+            max_n = it->first[var];
+        }
+    }
+    return ret->first;
+}
+template <class Coef, class Order>
 const Coef& Polynomial<Coef, Order>::leadingCoefficient() const {
     assert(!terms.empty());
     if (std::is_same<Order, GrevLexOrder>::value) return terms.begin()->second;
     return std::prev(terms.end())->second;
+}
+template <class Coef, class Order>
+const Coef& Polynomial<Coef, Order>::leadingCoefficient(const int& var) const {
+    assert(!terms.empty());
+    int64_t max_n = 0;
+    auto ret = terms.begin();
+    for (auto it = ret; it != terms.end(); it++) {
+        if (it->first[var] > max_n) {
+            ret = it;
+            max_n = it->first[var];
+        }
+    }
+    return ret->second;
 }
 template <class Coef, class Order>
 void Polynomial<Coef, Order>::eraseLeadingTerm() {
@@ -1009,12 +1114,52 @@ void Polynomial<Coef, Order>::eraseLeadingTerm() {
         terms.erase(std::prev(terms.end()));
 }
 template <class Coef, class Order>
+void Polynomial<Coef, Order>::eraseLeadingTerm(const int& var) {
+    assert(!terms.empty());
+    int64_t max_n = 0;
+    auto ret = terms.begin();
+    for (auto it = ret; it != terms.end(); it++) {
+        if (it->first[var] > max_n) {
+            ret = it;
+            max_n = it->first[var];
+        }
+    }
+    terms.erase(ret);
+}
+template <class Coef, class Order>
 Term<Coef> Polynomial<Coef, Order>::popLeadingTerm() {
     auto it = std::prev(terms.end());
     if (std::is_same<Order, GrevLexOrder>::value) it = terms.begin();
     Term<Coef> t{it->first, it->second};
     terms.erase(it);
     return t;
+}
+template <class Coef, class Order>
+Term<Coef> Polynomial<Coef, Order>::popLeadingTerm(const int& var) {
+    int64_t max_n = 0;
+    auto ret = terms.begin();
+    for (auto it = ret; it != terms.end(); it++) {
+        if (it->first[var] > max_n) {
+            ret = it;
+            max_n = it->first[var];
+        }
+    }
+    Term<Coef> t{ret->first, ret->second};
+    terms.erase(ret);
+    return t;
+}
+
+template <class Coef, class Order>
+Monomial monomialContent(const Polynomial<Coef, Order>& f) {
+    Monomial ret(f.leadingMonomial().size());
+    for (size_t i = 0; i < f.leadingMonomial().size(); i++) {
+        int64_t min_n = f.degree();
+        for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
+            if (it->first.exp(i) < min_n) min_n = it->first.exp(i);
+        }
+        ret.add_exp(i, min_n);
+    }
+    return ret;
 }
 }  // namespace polynomial
 

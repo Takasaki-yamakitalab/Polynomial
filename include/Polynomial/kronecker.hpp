@@ -1,8 +1,11 @@
 ﻿#ifndef POLYNOMIAL_KRONECKER_HPP
 #define POLYNOMIAL_KRONECKER_HPP
 
+#include "monomial_order.hpp"
 #include "polynomial.hpp"
 #include <algorithm>
+#include "zassenhaus_recombine.hpp"
+#include <iostream>
 
 namespace polynomial {
 
@@ -13,8 +16,15 @@ Polynomial<Coef, LexOrder> kroneckerSubstittution(const Polynomial<Coef, Order>&
 template <class Coef>
 Polynomial<Coef, LexOrder> inverseKronecker(const Polynomial<Coef, LexOrder>& f, int64_t B, size_t var_num);
 template <class Coef>
-std::vector<Polynomial<Coef, LexOrder>> inverseKroneckerAll(const std::vector<Polynomial<Coef, LexOrder>>& f, int64_t B, size_t var_num);
-
+std::vector<Polynomial<Coef, LexOrder>> inverseKroneckerAll(const std::vector<Polynomial<Coef, LexOrder>>& f, int64_t B,
+                                                            size_t var_num);
+template <class Coef>
+std::vector<Polynomial<Coef, LexOrder>> removeSubset(const std::vector<Polynomial<Coef, LexOrder>>& factors,
+                                                     const std::vector<int>& s);
+template <class Integer, class Order>
+std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Integer, Order>& origin,
+                                                           const std::vector<Polynomial<Integer, Order>>& uniFactors,
+                                                           std::vector<bool>& is_used, int64_t B, size_t var_num);
 
 template <class Coef, class Order>
 int64_t kroneckerBase(const Polynomial<Coef, Order>& f) {
@@ -62,13 +72,71 @@ Polynomial<Coef, LexOrder> inverseKronecker(const Polynomial<Coef, LexOrder>& f,
 }
 
 template <class Coef>
-std::vector<Polynomial<Coef, LexOrder>> inverseKroneckerAll(const std::vector<Polynomial<Coef, LexOrder>>& f, int64_t B, size_t var_num) {
+std::vector<Polynomial<Coef, LexOrder>> inverseKroneckerAll(const std::vector<Polynomial<Coef, LexOrder>>& f, int64_t B,
+                                                            size_t var_num) {
     std::vector<Polynomial<Coef, LexOrder>> ret;
     for (auto& p : f) {
         ret.push_back(inverseKronecker(p, B, var_num));
     }
     return ret;
 }
+
+template <class Coef>
+std::vector<Polynomial<Coef, LexOrder>> removeSubset(const std::vector<Polynomial<Coef, LexOrder>>& factors,
+                                                     const std::vector<int>& s) {
+    using Poly = Polynomial<Coef, LexOrder>;
+    std::vector<Poly> new_factors;
+    for (int i = 0; i < factors.size(); i++) {
+        bool continue_flg = false;
+        for (auto& j : s) continue_flg = true;
+        if (continue_flg) continue;
+        new_factors.push_back(factors[i]);
+    }
 }
+template <class Integer, class Order>
+std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Integer, Order>& origin,
+                                                           const std::vector<Polynomial<Integer, Order>>& factors,
+                                                           std::vector<bool>& is_used, int64_t B, size_t var_num) {
+    // if (var_num == 1) return inverseKroneckerAll(factors, B, var_num);
+    using Poly = Polynomial<Integer, Order>;
+    std::vector<Poly> ret;
+    Poly f = origin;
+    Integer multiplier(1);
+    std::cout << "[DEBUG] origin: " << origin << std::endl;
+
+    for (int k = 1; k < (int)factors.size(); k++) {
+        std::vector<std::vector<int>> subsets;
+        enumerateSubset(subsets, is_used, k);
+        for (auto& s : subsets) {
+            if (s.empty()) continue;
+
+            std::cout << "[DEBUG] s: ";
+            for (auto& i : s) std::cout << i << " ";
+            std::cout << std::endl;
+
+            Poly uf(Monomial(var_num), Integer(1));
+            for (auto& i : s)
+                if (!is_used[i]) uf *= factors[i];
+            if (uf == Poly(Monomial(var_num), Integer(1))) continue;
+
+            auto candidate = inverseKronecker(uf, B, var_num);
+            auto div = pseudoDivide(f, candidate);
+            if (!div.R.isZero()) continue;
+
+            for (auto& i : s) is_used[i] = true;
+            ret.push_back(candidate);
+            f = div.Q[0];
+            multiplier *= div.multiplier;
+        }
+    }
+    if (!f.isConstant())
+        ret.push_back(f);
+    else {
+        Integer c = f.leadingCoefficient() / multiplier;
+        if (c != Integer(1)) ret.push_back(Poly(Monomial(var_num), c));
+    }
+    return ret;
+}
+}  // namespace polynomial
 
 #endif

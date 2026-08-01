@@ -71,8 +71,6 @@ std::vector<std::vector<ModInt>> berlekampMatrix(const Polynomial<ModInt, Order>
 
     std::vector<std::vector<ModInt>> Q(n, std::vector<ModInt>(n));
 
-    Polynomial<ModInt, Order> x(Monomial(1, 1), ModInt(1));
-
     for (int j = 0; j < n; j++) {
         Polynomial<ModInt, Order> g(Monomial(1, j), ModInt(1));
         g = frobenius(g, f);
@@ -174,6 +172,7 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     using Poly = Polynomial<Integer, LexOrder>;
     if (f.degree() == 1) return {f};
 
+    std::cout << "[DEBUG] factorUniVar(" << f << ")" << std::endl;
     std::cout << "[DEBUG] before findGoodPrime" << std::endl;
     int p = findGoodPrime(f);
     std::cout << "[DEBUG] p: " << p << std::endl;
@@ -203,6 +202,14 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     collectLeaves(*root, lifted);
     std::cout << "[DEBUG] return factorUniVar() from collectLeaves()" << std::endl;
 
+    // DEBUG
+    // {
+    //     Polynomial<Integer, LexOrder> product(Monomial(1), Integer(1));
+    //     for (auto& f : lifted) product *= f;
+    //     std::cout << "lift product = " << product << "\n";
+    //     std::cout << "original = " << f << "\n";
+    // }
+
     // Recombine (Zassenhaus method)
     std::cout << "[DEBUG] call centerLiftAll() from factorUniVar()" << std::endl;
     lifted = centerLiftAll(lifted, pk);
@@ -224,16 +231,26 @@ std::vector<Polynomial<Integer, Order>> factorSquareFree(Polynomial<Integer, Ord
     if (f.degree() == 1) return {f};
 
     int64_t B = kroneckerBase(f);
-    Polynomial<Integer, LexOrder> univarPoly = kroneckerSubstittution(f, B);
+    Poly univarPoly = kroneckerSubstittution(f, B);
+    int64_t min_n = univarPoly.degree();
+    for (auto it = univarPoly.terms.begin(); it != univarPoly.terms.end(); it++) {
+        if (it->first.exp(0) < min_n) min_n = it->first.exp(0);
+    }
+    Polynomial<Integer, LexOrder> kroneckerShift(Monomial(1, min_n), Integer(1));
+    univarPoly = divide(univarPoly, {kroneckerShift}).Q[0];
     std::cout << "[DEBUG] B: " << B << std::endl;
     std::cout << "[DEBUG] g: " << univarPoly << std::endl;
+    std::cout << "[DEBUG] Kronecker shift: " << kroneckerShift << std::endl;
 
     std::vector<Polynomial<Integer, LexOrder>> univarFactors = factorUniVar(univarPoly);
+    for (int i = 0; i < min_n; i++) {
+        univarFactors.push_back(Poly(Monomial(1, 1), Integer(1)));
+    }
     for (auto& fact : univarFactors) std::cout << "[DEBUG] univarFactors: " << fact << std::endl;
 
-    univarFactors = inverseKroneckerAll(univarFactors, B, f.leadingMonomial().size());
-
-    return univarFactors;
+    // univarFactors = inverseKroneckerAll(univarFactors, B, f.leadingMonomial().size());
+    std::vector<bool> is_used(univarFactors.size(), false);
+    return kroneckerRecombine(f, univarFactors, is_used, B, f.leadingMonomial().size());
 }
 template <class Integer, class Order>
 std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial<Integer, Order> f) {
@@ -245,13 +262,11 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
     if (f.isConstant()) return ans;
 
     // content 除去
-    Integer c = content(f);
-    f /= c;
-    if (c != Integer(1)) {
-        std::cout << "[DEBUG] coeff: " << c << std::endl;
-        Poly p;
-        p.addTerm(Monomial(f.leadingMonomial().size(), 0), c);
-        ans.push_back({p, 1});
+    Poly cont(monomialContent(f), content(f));
+    f = divide(f, {cont}).Q[0];
+    if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
+        std::cout << "[DEBUG] content: " << cont << std::endl;
+        ans.push_back({cont, 1});
     }
 
     // square-free decomposition

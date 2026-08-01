@@ -2,16 +2,36 @@
 
 namespace polynomial {
 
-void enumerateSubset(int pos, int need, std::vector<int>& cur, std::vector<std::vector<int>>& ans, int n) {
+void enumerateSubsetImpl(int pos, int need, std::vector<int>& cur, std::vector<std::vector<int>>& dst, int n, const std::vector<bool>& exclude) {
     if ((int)cur.size() == need) {
-        ans.push_back(cur);
+        dst.push_back(cur);
         return;
     }
-    for (int i = pos; i < n; i++) {
+    for (int i = pos; i < exclude.size(); i++) {
+        if (exclude[i]) continue;
         cur.push_back(i);
-        enumerateSubset(i + 1, need, cur, ans, n);
+        enumerateSubsetImpl(i + 1, need, cur, dst, n, exclude);
         cur.pop_back();
     }
+}
+void enumerateSubset(std::vector<std::vector<int>>& dst, const std::vector<bool>& exclude, int need) {
+    dst.clear();
+    int available = 0;
+    for (size_t i = 0; i < exclude.size(); i++) {
+        if (!exclude[i]) available++;
+    }
+    if (need >= available) {
+        dst.emplace_back();
+        for (int i = 0; i < (int)exclude.size(); i++) {
+            if (!exclude[i]) dst.back().push_back(i);
+        }
+        return;
+    }
+    std::cout << "[DEBUG] need: " << need << std::endl;
+    std::cout << "[DEBUG] available: " << available << std::endl;
+    std::vector<int> cur;
+    enumerateSubsetImpl(0, need, cur, dst, available, exclude);
+    return;
 }
 
 }  // namespace polynomial
