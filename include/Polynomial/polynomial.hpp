@@ -23,6 +23,8 @@ struct Polynomial {
 
     bool isZero() const;
     bool isConstant() const;
+    bool isOne() const;
+    bool isConstant(Coef c) const;
     bool isMonomial() const;
     int64_t degree() const;
     int64_t degree(const int& var) const;
@@ -201,6 +203,16 @@ bool Polynomial<Coef, Order>::isConstant() const {
     return leadingMonomial().degree() == 0;
 }
 template <class Coef, class Order>
+bool Polynomial<Coef, Order>::isOne() const {
+    if (terms.empty()) return false;
+    return isConstant() && leadingCoefficient() == Coef(1);
+}
+template <class Coef, class Order>
+bool Polynomial<Coef, Order>::isConstant(Coef c) const {
+    if (terms.empty()) return c == Coef(0);
+    return isConstant() && leadingCoefficient() == c;
+}
+template <class Coef, class Order>
 bool Polynomial<Coef, Order>::isMonomial() const {
     return terms.size() == 1;
 }
@@ -322,7 +334,7 @@ Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator-=(const Polynomial<Co
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator*=(const Coef& c) {
-    if (c == Coef(0)) {
+    if (c == Coef(0) || isZero()) {
         clear();
         return *this;
     }
@@ -334,6 +346,10 @@ Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator*=(const Coef& c) {
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator*=(const Term<Coef>& t) {
+    if (t.coef == Coef(0) || isZero()) {
+        clear();
+        return *this;
+    }
     Polynomial<Coef, Order> tmp;
     for (auto& term : terms) {
         tmp.addTerm(term.first * t.mono, term.second * t.coef);
@@ -343,12 +359,18 @@ Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator*=(const Term<Coef>& t
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator*=(const Polynomial<Coef, Order>& p) {
+    if (p.isZero() || isZero()) {
+        clear();
+        return *this;
+    }
+    assert(p.leadingMonomial().size() == leadingMonomial().size());
     auto temp = *this * p;
     terms.swap(temp.terms);
     return *this;
 }
 template <class Coef, class Order>
 Polynomial<Coef, Order>& Polynomial<Coef, Order>::operator/=(const Coef& c) {
+    if (isZero() || c == Coef(1)) return *this;
     assert(c != Coef(0));
     for (auto& term : terms) {
         term.second /= c;
@@ -385,8 +407,10 @@ Polynomial<Coef, Order> operator-(const Polynomial<Coef, Order>& a, const Polyno
 template <class Coef, class Order>
 Polynomial<Coef, Order> operator*(const Polynomial<Coef, Order>& a, const Polynomial<Coef, Order>& b) {
     Polynomial<Coef, Order> ret;
+    if (a.isZero() || b.isZero()) return ret;
     for (auto itr1 = a.terms.begin(); itr1 != a.terms.end(); itr1++) {
         for (auto itr2 = b.terms.begin(); itr2 != b.terms.end(); itr2++) {
+            assert(itr1->first.size() == itr2->first.size());
             ret.addTerm(itr1->first * itr2->first, itr1->second * itr2->second);
         }
     }
@@ -1022,7 +1046,7 @@ template <class Order>
 Polynomial<ModInt, Order> powModPolynomial(Polynomial<ModInt, Order> a, int64_t n,
                                            const Polynomial<ModInt, Order>& mod) {
     Polynomial<int, Order> ret;
-    ret.addTerm(Monomial(1), ModInt(1));
+    ret.addTerm(Monomial(a.leadingMonomial().size()), ModInt(1));
 
     while (n > 0) {
         if (n & 1) {
@@ -1117,14 +1141,14 @@ template <class Coef, class Order>
 void Polynomial<Coef, Order>::eraseLeadingTerm(const int& var) {
     assert(!terms.empty());
     int64_t max_n = 0;
-    auto ret = terms.begin();
-    for (auto it = ret; it != terms.end(); it++) {
+    auto lt = terms.begin();
+    for (auto it = lt; it != terms.end(); it++) {
         if (it->first[var] > max_n) {
-            ret = it;
+            lt = it;
             max_n = it->first[var];
         }
     }
-    terms.erase(ret);
+    terms.erase(lt);
 }
 template <class Coef, class Order>
 Term<Coef> Polynomial<Coef, Order>::popLeadingTerm() {
@@ -1137,15 +1161,15 @@ Term<Coef> Polynomial<Coef, Order>::popLeadingTerm() {
 template <class Coef, class Order>
 Term<Coef> Polynomial<Coef, Order>::popLeadingTerm(const int& var) {
     int64_t max_n = 0;
-    auto ret = terms.begin();
-    for (auto it = ret; it != terms.end(); it++) {
+    auto lt = terms.begin();
+    for (auto it = lt; it != terms.end(); it++) {
         if (it->first[var] > max_n) {
-            ret = it;
+            lt = it;
             max_n = it->first[var];
         }
     }
-    Term<Coef> t{ret->first, ret->second};
-    terms.erase(ret);
+    Term<Coef> t{lt->first, lt->second};
+    terms.erase(lt);
     return t;
 }
 

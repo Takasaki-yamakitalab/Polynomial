@@ -172,6 +172,16 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     using Poly = Polynomial<Integer, LexOrder>;
     if (f.degree() == 1) return {f};
 
+    Poly cont(monomialContent(f), content(f));
+    if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
+        f = pseudoDivide(f, cont).Q[0];
+        std::cout << "[DEBUG] content: " << cont << std::endl;
+    }
+    if (f.leadingCoefficient() < Integer(0)) {
+        cont *= Integer(-1);
+        f *= Integer(-1);
+    }
+
     // std::cout << "[DEBUG] factorUniVar(" << f << ")" << std::endl;
     // std::cout << "[DEBUG] before findGoodPrime" << std::endl;
     int p = findGoodPrime(f);
@@ -219,6 +229,7 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     // std::cout << "[DEBUG] call zassenhausRecombine() from factorUniVar()" << std::endl;
     auto ret = zassenhausRecombine(f, lifted);
     // std::cout << "[DEBUG] return factorUniVar() from zassenhausRecombine()" << std::endl;
+    ret.push_back(cont);
     return ret;
 }
 
@@ -263,10 +274,14 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
 
     // content 除去
     Poly cont(monomialContent(f), content(f));
-    f = divide(f, {cont}).Q[0];
     if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
-        // std::cout << "[DEBUG] content: " << cont << std::endl;
+        f = pseudoDivide(f, cont).Q[0];
+        std::cout << "[DEBUG] content: " << cont << std::endl;
         ans.push_back({cont, 1});
+    }
+    if (f.leadingCoefficient() < Integer(0)) {
+        cont *= Integer(-1);
+        f *= Integer(-1);
     }
 
     // square-free decomposition
@@ -276,8 +291,9 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
     for (auto& sqf : sqfs) {
         auto factors = factorSquareFree(sqf.poly);
         for (auto& h : factors) {
+            if (h.isOne()) continue;
             ans.push_back({h, sqf.multiplicity});
-            // std::cout << "[DEBUG] factor: " << h << std::endl;
+            std::cout << "[DEBUG] factor: " << h << std::endl;
         }
     }
     return ans;

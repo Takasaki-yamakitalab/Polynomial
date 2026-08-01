@@ -18,9 +18,6 @@ Polynomial<Coef, LexOrder> inverseKronecker(const Polynomial<Coef, LexOrder>& f,
 template <class Coef>
 std::vector<Polynomial<Coef, LexOrder>> inverseKroneckerAll(const std::vector<Polynomial<Coef, LexOrder>>& f, int64_t B,
                                                             size_t var_num);
-template <class Coef>
-std::vector<Polynomial<Coef, LexOrder>> removeSubset(const std::vector<Polynomial<Coef, LexOrder>>& factors,
-                                                     const std::vector<int>& s);
 template <class Integer, class Order>
 std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Integer, Order>& origin,
                                                            const std::vector<Polynomial<Integer, Order>>& uniFactors,
@@ -47,9 +44,7 @@ Polynomial<Coef, LexOrder> kroneckerSubstittution(const Polynomial<Coef, Order>&
             e += it->first.exp(i) * base;
             base *= B;
         }
-        Monomial m(std::vector<int64_t>{e});
-
-        ret.addTerm(m, it->second);
+        ret.addTerm(Monomial(1, e), it->second);
     }
     return ret;
 }
@@ -81,18 +76,6 @@ std::vector<Polynomial<Coef, LexOrder>> inverseKroneckerAll(const std::vector<Po
     return ret;
 }
 
-template <class Coef>
-std::vector<Polynomial<Coef, LexOrder>> removeSubset(const std::vector<Polynomial<Coef, LexOrder>>& factors,
-                                                     const std::vector<int>& s) {
-    using Poly = Polynomial<Coef, LexOrder>;
-    std::vector<Poly> new_factors;
-    for (int i = 0; i < factors.size(); i++) {
-        bool continue_flg = false;
-        for (auto& j : s) continue_flg = true;
-        if (continue_flg) continue;
-        new_factors.push_back(factors[i]);
-    }
-}
 template <class Integer, class Order>
 std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Integer, Order>& origin,
                                                            const std::vector<Polynomial<Integer, Order>>& factors,
@@ -114,9 +97,9 @@ std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Inte
             // for (auto& i : s) std::cout << i << " ";
             // std::cout << std::endl;
 
-            Poly uf(Monomial(var_num), Integer(1));
+            Poly uf(Monomial(1), Integer(1));
             for (auto& i : s)
-                if (!is_used[i]) uf *= factors[i];
+                if (!is_used[i]) uf = uf * factors[i];  // <-ここ
             if (uf == Poly(Monomial(var_num), Integer(1))) continue;
 
             auto candidate = inverseKronecker(uf, B, var_num);

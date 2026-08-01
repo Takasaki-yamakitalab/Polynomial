@@ -1,5 +1,9 @@
 #include "Polynomial/monomial.hpp"
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
 namespace polynomial {
 
 // Monomial member functions
@@ -42,6 +46,16 @@ Monomial Monomial::operator/(const Monomial& rhs) const {
     return r /= rhs;
 }
 Monomial& Monomial::operator*=(const Monomial& rhs) {
+#ifdef ANDROID
+    if (m_exp.size() != rhs.m_exp.size()) {
+        __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "lhs size: %zu", m_exp.size());
+        __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "lhs: ");
+        for (auto& e : m_exp) __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "  %d", e);
+        __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "rhs size: %zu", rhs.m_exp.size());
+        __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "rhs: ");
+        for (auto& e : rhs.m_exp) __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "  %d", e);
+    }
+#endif
     assert(m_exp.size() == rhs.m_exp.size());
     for (size_t i = 0; i < m_exp.size(); i++) {
         m_exp[i] += rhs.m_exp[i];
