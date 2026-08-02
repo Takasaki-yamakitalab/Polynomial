@@ -217,7 +217,7 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     // DEBUG
     {
         Polynomial<Integer, LexOrder> product(Monomial(1), Integer(1));
-        for (auto& f : lifted) product *= f;
+        for (auto& lift : lifted) product *= lift;
         DEBUG_OUT("lift product: ", product);
         DEBUG_OUT("original: ", f);
     }
