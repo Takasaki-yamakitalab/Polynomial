@@ -27,7 +27,7 @@ template <class Coef, class Order>
 int64_t kroneckerBase(const Polynomial<Coef, Order>& f) {
     int64_t B = 1;
     size_t n = f.leadingMonomial().size();
-    for (size_t i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         B = std::max(B, f.degree(i) + 1);
     }
     return B;

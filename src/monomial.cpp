@@ -2,6 +2,7 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#include <cinttypes>
 #endif
 
 namespace polynomial {
@@ -50,10 +51,10 @@ Monomial& Monomial::operator*=(const Monomial& rhs) {
     if (m_exp.size() != rhs.m_exp.size()) {
         __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "lhs size: %zu", m_exp.size());
         __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "lhs: ");
-        for (auto& e : m_exp) __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "  %d", e);
+        for (auto& e : m_exp) __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "  %" PRId64, e);
         __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "rhs size: %zu", rhs.m_exp.size());
         __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "rhs: ");
-        for (auto& e : rhs.m_exp) __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "  %d", e);
+        for (auto& e : rhs.m_exp) __android_log_print(ANDROID_LOG_INFO, "Monomial::operator*=", "  %" PRId64, e);
     }
 #endif
     assert(m_exp.size() == rhs.m_exp.size());

@@ -23,7 +23,7 @@ Coef coefficientGCD(Coef a, Coef b) {
     a = abs(a);
     b = abs(b);
     while (b != Coef(0)) {
-        Coef r = fmod(a, b);
+        Coef r = Coef(fmod(a, b));
         a = b;
         b = r;
     }

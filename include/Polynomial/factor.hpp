@@ -75,7 +75,7 @@ std::vector<std::vector<ModInt>> berlekampMatrix(const Polynomial<ModInt, Order>
         Polynomial<ModInt, Order> g(Monomial(1, j), ModInt(1));
         g = frobenius(g, f);
         for (auto it = g.terms.begin(); it != g.terms.end(); it++) {
-            int i = it->first.exp(0);
+            int i = (int)it->first.exp(0);
             Q[i][j] = it->second;
         }
     }
@@ -93,6 +93,7 @@ std::vector<std::vector<ModInt>> berlekampMatrix(const Polynomial<ModInt, Order>
 
     return Q;
 }
+
 template <class Order>
 std::vector<Polynomial<ModInt, Order>> basisToPolynomial(const std::vector<std::vector<ModInt>>& basis) {
     using Poly = Polynomial<ModInt, Order>;
@@ -107,6 +108,7 @@ std::vector<Polynomial<ModInt, Order>> basisToPolynomial(const std::vector<std::
     }
     return ret;
 }
+
 template <class Order, class RNG>
 Polynomial<ModInt, Order> randomBerlekampPolynomial(const std::vector<Polynomial<ModInt, Order>>& basis, RNG& rng) {
     using Poly = Polynomial<ModInt, Order>;
@@ -120,6 +122,7 @@ Polynomial<ModInt, Order> randomBerlekampPolynomial(const std::vector<Polynomial
     }
     return h;
 }
+
 template <class Order, class RNG>
 std::vector<Polynomial<ModInt, Order>> berlekampFactor(Polynomial<ModInt, Order> f, RNG& rng) {
     std::vector<Polynomial<ModInt, Order>> ret;
@@ -167,6 +170,7 @@ std::vector<Polynomial<ModInt, Order>> berlekampFactor(Polynomial<ModInt, Order>
     ret.push_back(f);
     return ret;
 }
+
 template <class Integer>
 std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexOrder> f) {
     using Poly = Polynomial<Integer, LexOrder>;
@@ -199,8 +203,8 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     // std::cout << "[DEBUG] call buildFactorTree() from factorUniVar()" << std::endl;
     auto root = buildFactorTree<Integer>(modFactors, 0, modFactors.size());
     // std::cout << "[DEBUG] return factorUniVar() from buildFactorTree()" << std::endl;
-    const int bound = henselBound(f);
-    int pk = p;
+    const int64_t bound = henselBound(f);
+    int64_t pk = p;
     while (pk < bound) {
         // std::cout << "[DEBUG] call henselPadicTree() from factorUniVar()" << std::endl;
         henselPadicTree(f, *root, pk, p);
@@ -263,6 +267,7 @@ std::vector<Polynomial<Integer, Order>> factorSquareFree(Polynomial<Integer, Ord
     std::vector<bool> is_used(univarFactors.size(), false);
     return kroneckerRecombine(f, univarFactors, is_used, B, f.leadingMonomial().size());
 }
+
 template <class Integer, class Order>
 std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial<Integer, Order> f) {
     using Poly = Polynomial<Integer, Order>;
@@ -274,14 +279,14 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
 
     // content 除去
     Poly cont(monomialContent(f), content(f));
+    if (f.leadingCoefficient() < Integer(0)) {
+        cont *= Integer(-1);
+        f *= Integer(-1);
+    }
     if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
         f = pseudoDivide(f, cont).Q[0];
         std::cout << "[DEBUG] content: " << cont << std::endl;
         ans.push_back({cont, 1});
-    }
-    if (f.leadingCoefficient() < Integer(0)) {
-        cont *= Integer(-1);
-        f *= Integer(-1);
     }
 
     // square-free decomposition

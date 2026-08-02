@@ -8,35 +8,35 @@ namespace polynomial {
 
 template <class Integer, class Order>
 void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                     Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const Integer& pk, const Integer& p);
+                     Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int64_t& pk, const int& p);
 template <class Integer, class Order>
 void henselPadic(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                 Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const Integer& p, const Integer& bound);
+                 Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int& p, const int64_t& bound);
 template <class Integer, class Order>
-void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Order>& node, const Integer& pk,
-                     const Integer& p);
+void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Order>& node, const int64_t& pk,
+                     const int& p);
 
 template <class Integer, class Order>
 void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                     Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const Integer& pk,
-                     const Integer& p) {
+                     Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int64_t& pk,
+                     const int& p) {
     // Algorithm 3.5.6 (Hensel Quadratic Lift)
     // Cohen, A Course in Computational Algebraic Number Theory (1993)
     using Poly = Polynomial<Integer, Order>;
 
     // factor correction
-    Poly E = (f - g * h) / pk;
+    Poly E = (f - g * h) / Integer(pk);
     auto dg = divideMod(t * E, {g}, p).R;
     auto dh = divideMod(s * E, {h}, p).R;
-    g += pk * dg;
-    h += pk * dh;
+    g += Integer(pk) * dg;
+    h += Integer(pk) * dh;
 
     // Bézout correction
-    Poly C = (Poly(Monomial(f.leadingMonomial().size()), Integer(1)) - s * g - t * h) / pk;
+    Poly C = (Poly(Monomial(f.leadingMonomial().size()), Integer(1)) - s * g - t * h) / Integer(pk);
     auto ds = divideMod(t * C, {g}, p).R;
     auto dt = divideMod(s * C, {h}, p).R;
-    s += pk * ds;
-    t += pk * dt;
+    s += Integer(pk) * ds;
+    t += Integer(pk) * dt;
 
     // std::cout << "[DEBUG] end of henselPadicStep()" << std::endl;
     // std::cout << "[DEBUG] deg(g): " << g.degree() << std::endl;
@@ -45,8 +45,8 @@ void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Or
 
 template <class Integer, class Order>
 void henselPadic(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                 Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const Integer& p, const Integer& bound) {
-    Integer pk = p;
+                 Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int& p, const int64_t& bound) {
+    int64_t pk = p;
     while (pk < bound) {
         henselPadicStep(f, g, h, s, t, pk);
         pk *= pk;
@@ -54,8 +54,8 @@ void henselPadic(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>
 }
 
 template <class Integer, class Order>
-void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Order>& node, const Integer& pk,
-                     const Integer& p) {
+void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Order>& node, const int64_t& pk,
+                     const int& p) {
     if (node.isLeaf()) return;
 
     auto& g = node.left->factor;

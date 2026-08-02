@@ -29,8 +29,8 @@ Polynomial<Integer, Order> centerLift(const Polynomial<Integer, Order>& f, int64
     Polynomial<Integer, Order> g;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
         Integer c = it->second % Integer(modulus);
-        if (c > modulus / 2) c -= modulus;
-        if (c < -modulus / 2) c += modulus;
+        if (c > modulus / 2) c -= Integer(modulus);
+        if (c < -modulus / 2) c += Integer(modulus);
         g.addTerm(it->first, c);
     }
     return g;
@@ -63,12 +63,13 @@ std::vector<Polynomial<Coef, Order>> zassenhausRecombine(Polynomial<Coef, Order>
     std::vector<Poly> result;
     while (!lifted.empty()) {
         bool found = false;
-        int m = lifted.size();
+        int m = (int)lifted.size();
         for (int k = 1; k <= m / 2 && !found; k++) {
             std::vector<std::vector<int>> subsets;
-            std::vector<int> cur;
+            // std::vector<int> cur;
             std::vector<bool> exclude(m, false);
-            enumerateSubsetImpl(0, k, cur, subsets, m, exclude);
+            // enumerateSubsetImpl(0, k, cur, subsets, m, exclude);
+            enumerateSubset(subsets, exclude, k);
             for (size_t i = 0; i < subsets.size(); i++) {
                 Poly g = productSubset(lifted, subsets[i]);
                 // if (!isFactor(f, g)) continue;

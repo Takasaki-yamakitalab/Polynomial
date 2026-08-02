@@ -1,4 +1,4 @@
-#ifndef POLYNOMIAL_POLYNOMIAL_HPP
+﻿#ifndef POLYNOMIAL_POLYNOMIAL_HPP
 #define POLYNOMIAL_POLYNOMIAL_HPP
 
 #include <map>
@@ -27,7 +27,7 @@ struct Polynomial {
     bool isConstant(Coef c) const;
     bool isMonomial() const;
     int64_t degree() const;
-    int64_t degree(const int& var) const;
+    int64_t degree(const size_t& var) const;
     Term<Coef> leadingTerm() const;
     Term<Coef> leadingTerm(const int& var) const;
     const Monomial& leadingMonomial() const;
@@ -227,7 +227,7 @@ int64_t Polynomial<Coef, Order>::degree() const {
     return deg;
 }
 template <class Coef, class Order>
-int64_t Polynomial<Coef, Order>::degree(const int& var) const {
+int64_t Polynomial<Coef, Order>::degree(const size_t& var) const {
     if (isZero()) return -1;
     int64_t deg = 0;
     for (auto it = terms.begin(); it != terms.end(); it++) {
@@ -622,7 +622,7 @@ size_t selectLowDegVar(const std::vector<Polynomial<Coef, Order>>& F) {
         min_score += F[k].degree(0);
     }
     for (size_t i = 1; i < n; i++) {
-        size_t score = 0;
+        int64_t score = 0;
         for (auto& f : F) score += f.degree(i);
         if (score < min_score) {
             min_score = score;
@@ -649,7 +649,7 @@ static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Poly
                                                  std::false_type) {
     // 整数係数
     using Poly = Polynomial<Coef, Order>;
-    size_t var = selectLowDegVar(std::vector{f, g});
+    int var = (int)selectLowDegVar(std::vector{f, g});
     if (g.isZero()) return primitivePartMultiVar(f, var);
 
     auto c = coefficientGCD(content(f), content(g));
@@ -769,7 +769,7 @@ template <class Coef, class Order>
 Polynomial<Coef, Order> multiDerivativeGCD(Polynomial<Coef, Order> f) {
     using Poly = Polynomial<Coef, Order>;
     Poly g = f;
-    int n = f.leadingMonomial().size();
+    int n = (int)f.leadingMonomial().size();
     for (int i = 0; i < n; i++) {
         Poly df = differential(f, i);
 
