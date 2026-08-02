@@ -38,9 +38,9 @@ void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Or
     s += Integer(pk) * ds;
     t += Integer(pk) * dt;
 
-    // std::cout << "[DEBUG] end of henselPadicStep()" << std::endl;
-    // std::cout << "[DEBUG] deg(g): " << g.degree() << std::endl;
-    // std::cout << "[DEBUG] deg(h): " << h.degree() << std::endl;
+    DEBUG_OUT("end of henselPadicStep()");
+    DEBUG_OUT("deg(g): ", g.degree());
+    DEBUG_OUT("deg(h): ", h.degree());
 }
 
 template <class Integer, class Order>

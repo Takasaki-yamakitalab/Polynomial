@@ -2,6 +2,7 @@
 #define POLYNOMIAL_FACTOR_NODE_HPP
 
 #include "polynomial.hpp"
+#include "debug_messager.hpp"
 
 namespace polynomial {
 
@@ -39,7 +40,7 @@ std::unique_ptr<FactorNode<Coef, Order>> makeLeaf(const Polynomial<Coef, Order>&
 template <class Coef, class Order>
 std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polynomial<Coef, Order>>& factors,
                                                          size_t begin, size_t end) {
-    // std::cout << "[DEBUG] buildFactorTree(" << begin << ", " << end << ")" << std::endl;
+    DEBUG_OUT("buildFactorTree(", begin, ", ", end, ")");
     if (begin >= end) {
         throw std::logic_error("buildFactorTree: empty range");
     }
@@ -53,11 +54,11 @@ std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polyn
     size_t mid = (begin + end) / 2;
     node->left = buildFactorTree(factors, begin, mid);
     node->right = buildFactorTree(factors, mid, end);
-    // std::cout << "[DEBUG] before multiply" << std::endl;
+    DEBUG_OUT("before multiply");
     node->factor = node->left->factor * node->right->factor;
-    // std::cout << "[DEBUG] before extendedEuclid" << std::endl;
+    DEBUG_OUT("before extendedEuclid");
     auto ee = extendedEuclid(node->left->factor, node->right->factor);
-    // std::cout << "[DEBUG] after extendedEuclid" << std::endl;
+    DEBUG_OUT("after extendedEuclid");
     node->s = ee.s;
     node->t = ee.t;
     return node;
@@ -65,7 +66,7 @@ std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polyn
 template <class Integer, class Order>
 std::unique_ptr<FactorNode<Integer, Order>> buildFactorTree(const std::vector<Polynomial<ModInt, Order>>& factors,
                                                             size_t begin, size_t end) {
-    // std::cout << "[DEBUG] buildFactorTree(" << begin << ", " << end << ")" << std::endl;
+    DEBUG_OUT("buildFactorTree(", begin, ", ", end, ")");
     if (begin >= end) {
         throw std::logic_error("buildFactorTree: empty range");
     }

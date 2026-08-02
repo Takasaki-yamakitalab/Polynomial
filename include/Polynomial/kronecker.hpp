@@ -5,7 +5,7 @@
 #include "polynomial.hpp"
 #include <algorithm>
 #include "zassenhaus_recombine.hpp"
-#include <iostream>
+#include "debug_messager.hpp"
 
 namespace polynomial {
 
@@ -85,7 +85,7 @@ std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Inte
     std::vector<Poly> ret;
     Poly f = origin;
     Integer multiplier(1);
-    // std::cout << "[DEBUG] origin: " << origin << std::endl;
+    DEBUG_OUT("origin: ", origin);
 
     for (int k = 1; k < (int)factors.size(); k++) {
         std::vector<std::vector<int>> subsets;
@@ -93,9 +93,7 @@ std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Inte
         for (auto& s : subsets) {
             if (s.empty()) continue;
 
-            // std::cout << "[DEBUG] s: ";
-            // for (auto& i : s) std::cout << i << " ";
-            // std::cout << std::endl;
+            DEBUG_OUT("s: ", s);
 
             Poly uf(Monomial(1), Integer(1));
             for (auto& i : s)

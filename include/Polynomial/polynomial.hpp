@@ -9,6 +9,7 @@
 #include "coefficient.hpp"
 #include <algorithm>
 #include <iostream>
+#include "debug_messager.hpp"
 
 namespace polynomial {
 
@@ -539,7 +540,7 @@ DivisionResult<Integer, Order> pseudoDivide(Polynomial<Integer, Order> f, const 
     using Poly = Polynomial<Integer, Order>;
     DivisionResult<Integer, Order> ret;
     assert(!g.isZero());
-    // std::cout << "[DEBUG] pseudoDivide(" << f << ", " << g << ")" << std::endl;
+    DEBUG_OUT("pseudoDivide(", f, ", ", g, ")");
 
     Poly R = f;
     Poly Q;
@@ -577,7 +578,7 @@ Polynomial<Integer, Order> pseudoRemainder(const Polynomial<Integer, Order>& f, 
                                            const int& var) {
     using Poly = Polynomial<Integer, Order>;
     assert(!g.isZero());
-    // std::cout << "[DEBUG] pseudoRemainder(" << f << ", " << g << ", " << var << ")" << std::endl;
+    DEBUG_OUT("pseudoRemainder(", f, ", ", g, ", ", var, ")");
 
     Poly R = f;
 
@@ -655,9 +656,9 @@ static Polynomial<Coef, Order> polynomialGCDImpl(Polynomial<Coef, Order> f, Poly
     auto c = coefficientGCD(content(f), content(g));
     while (!g.isZero()) {
         Poly r = pseudoRemainder(f, g, var);
-        // std::cout << "[DEBUG] r: " << r << "\n";
-        // std::cout << "[DEBUG] isZero: " << r.isZero() << "\n";
-        // std::cout << "[DEBUG] size: " << r.terms.size() << "\n";
+        DEBUG_OUT("r: ", r);
+        DEBUG_OUT("isZero: ", r.isZero());
+        DEBUG_OUT("size: ", r.terms.size());
         r = primitivePartMultiVar(r, var);
         f = g;
         g = r;
@@ -1030,11 +1031,11 @@ int findGoodPrime(const Polynomial<int, Order>& f) {
 
         auto df = derivativeMod(f, p);
 
-        // std::cout << "[DEBUG] p: " << p << std::endl;
-        // std::cout << "[DEBUG] fp: " << fp << std::endl;
-        // std::cout << "[DEBUG] df: " << df << std::endl;
+        DEBUG_OUT("p: ", p);
+        DEBUG_OUT("fp: ", fp);
+        DEBUG_OUT("df: ", df);
         auto g = polynomialGCD(fp, df);
-        // std::cout << "[DEBUG] gcd: " << g << std::endl;
+        DEBUG_OUT("gcd: ", g);
 
         // square-free
         if (g.isConstant()) return p;
