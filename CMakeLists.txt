@@ -13,10 +13,11 @@ endif()
 
 set(SRC
     src/coefficient.cpp
+    src/crt.cpp
+    src/enumerate_subset.cpp
     src/factor.cpp
     src/monomial.cpp
     src/polynomial_order.cpp
-    src/zassenhaus_recombine.cpp
 )
 
 if(MSVC)

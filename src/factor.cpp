@@ -1,4 +1,5 @@
-﻿#include "Polynomial/factor.hpp"
+﻿#include <vector>
+#include "Polynomial/modint.hpp"
 
 namespace polynomial {
 std::vector<std::vector<ModInt>> nullSpace(std::vector<std::vector<ModInt>> A) {

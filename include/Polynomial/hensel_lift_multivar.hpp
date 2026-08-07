@@ -40,7 +40,9 @@ HenselFactor<Coef, Order> henselLiftMultiVarStep(const Polynomial<Coef, Order>& 
 
     Poly E = f - g * h;
     for (int64_t i = 0; i < precision; i++) {
-        E = divideByLinearFactor(E, var, a).Q[0];
+        auto qr = divideByLinearFactor(E, var, a);
+        assert(qr.R.isZero());
+        E = qr.Q[0];
     }
     g += (t * E) * factor;
     h += (s * E) * factor;
@@ -67,10 +69,15 @@ void henselLiftMultiVarTree(const Polynomial<Coef, Order>& f, FactorNode<Coef, O
     Poly g = node.left->factor;
     Poly h = node.right->factor;
 
-    henselLiftMultiVar(f, g, h, var, a);
+    // henselLiftMultiVar(f, g, h, var, a);
+    int precision = 1;
+    while (precision <= f.degree(var)) {
+        henselLiftMultiVarStep(f, g, h, node.s, node.t, var, a, precision);
+        precision *= 2;
+    }
 
-    node->left->factor = g;
-    node->right->factor = h;
+    node.left->factor = g;
+    node.right->factor = h;
 
     henselLiftMultiVarTree(g, *node->left, var, a);
     henselLiftMultiVarTree(h, *node->right, var, a);

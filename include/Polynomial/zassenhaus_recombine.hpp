@@ -2,6 +2,8 @@
 #define POLYNOMIAL_ZASSENHAUS_RECOMBINE_HPP
 
 #include "polynomial.hpp"
+#include "polynomial_gcd.hpp"
+#include "enumerate_subset.hpp"
 
 namespace polynomial {
 
@@ -11,10 +13,6 @@ Polynomial<Integer, Order> centerLift(const Polynomial<Integer, Order>& f, int64
 template <class Integer, class Order>
 std::vector<Polynomial<Integer, Order>> centerLiftAll(const std::vector<Polynomial<Integer, Order>>& F,
                                                       int64_t modulus);
-
-void enumerateSubsetImpl(int pos, int need, std::vector<int>& cur, std::vector<std::vector<int>>& ans, int n,
-                         const std::vector<bool>& exclude);
-void enumerateSubset(std::vector<std::vector<int>>& dst, const std::vector<bool>& exclude, int need);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> productSubset(const std::vector<Polynomial<Coef, Order>>& factors,
@@ -66,16 +64,11 @@ std::vector<Polynomial<Coef, Order>> zassenhausRecombine(Polynomial<Coef, Order>
         int m = (int)lifted.size();
         for (int k = 1; k <= m / 2 && !found; k++) {
             std::vector<std::vector<int>> subsets;
-            // std::vector<int> cur;
             std::vector<bool> exclude(m, false);
-            // enumerateSubsetImpl(0, k, cur, subsets, m, exclude);
             enumerateSubset(subsets, exclude, k);
             for (size_t i = 0; i < subsets.size(); i++) {
                 Poly g = productSubset(lifted, subsets[i]);
-                // if (!isFactor(f, g)) continue;
-                // result.push_back(g);
-                // f = divide(f, {g}).Q[0];
-                Poly d = primitivePart(polynomialGCD(f, g));
+                Poly d = primitivePart(uniPolynomialGCD(f, g));
                 if (d.degree() <= 0 || d == f) continue;
                 result.push_back(d);
                 f = primitivePart(divide(f, {d}).Q[0]);

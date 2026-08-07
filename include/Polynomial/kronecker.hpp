@@ -4,7 +4,7 @@
 #include "monomial_order.hpp"
 #include "polynomial.hpp"
 #include <algorithm>
-#include "zassenhaus_recombine.hpp"
+#include "enumerate_subset.hpp"
 #include "debug_messager.hpp"
 
 namespace polynomial {
@@ -12,7 +12,7 @@ namespace polynomial {
 template <class Coef, class Order>
 int64_t kroneckerBase(const Polynomial<Coef, Order>& f);
 template <class Coef, class Order>
-Polynomial<Coef, LexOrder> kroneckerSubstittution(const Polynomial<Coef, Order>& f, int64_t B);
+Polynomial<Coef, LexOrder> kroneckerSubstitution(const Polynomial<Coef, Order>& f, int64_t B);
 template <class Coef>
 Polynomial<Coef, LexOrder> inverseKronecker(const Polynomial<Coef, LexOrder>& f, int64_t B, size_t var_num);
 template <class Coef>
@@ -34,7 +34,7 @@ int64_t kroneckerBase(const Polynomial<Coef, Order>& f) {
 }
 
 template <class Coef, class Order>
-Polynomial<Coef, LexOrder> kroneckerSubstittution(const Polynomial<Coef, Order>& f, int64_t B) {
+Polynomial<Coef, LexOrder> kroneckerSubstitution(const Polynomial<Coef, Order>& f, int64_t B) {
     using UniPoly = Polynomial<Coef, LexOrder>;
     UniPoly ret;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {

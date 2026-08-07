@@ -18,8 +18,7 @@ void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Or
 
 template <class Integer, class Order>
 void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                     Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int64_t& pk,
-                     const int& p) {
+                     Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int64_t& pk, const int& p) {
     // Algorithm 3.5.6 (Hensel Quadratic Lift)
     // Cohen, A Course in Computational Algebraic Number Theory (1993)
     using Poly = Polynomial<Integer, Order>;
@@ -62,6 +61,8 @@ void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Or
     auto& h = node.right->factor;
 
     henselPadicStep(f, g, h, node.s, node.t, pk, p);
+    DEBUG_OUT("bezout (mod ", pk, "): ", modPolynomial(node.s * g + node.t * h, pk));
+    DEBUG_OUT("factor error (mod ", pk, "): ", modPolynomial(g * h, pk) - modPolynomial(f, pk));
 
     henselPadicTree(g, *node.left, pk, p);
     henselPadicTree(h, *node.right, pk, p);

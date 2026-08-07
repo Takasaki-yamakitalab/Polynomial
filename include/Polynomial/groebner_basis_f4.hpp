@@ -1,5 +1,5 @@
-﻿#ifndef POLYNOMIAL_GROEBNER_F4_HPP
-#define POLYNOMIAL_GROEBNER_F4_HPP
+﻿#ifndef POLYNOMIAL_GROEBNER_BASIS_F4_HPP
+#define POLYNOMIAL_GROEBNER_BASIS_F4_HPP
 
 #include "polynomial.hpp"
 #include <set>
@@ -44,6 +44,8 @@ std::vector<SparseRow<Coef>> reduceTargets(F4Matrix<Coef, Order>& M);
 template <class Coef, class Order>
 std::vector<Polynomial<Coef, Order>> f4ReduceBatch(const std::vector<Polynomial<Coef, Order>>& G,
                                                    const std::vector<Polynomial<Coef, Order>>& S);
+template <class Coef, class Order>
+std::vector<Polynomial<Coef, Order>> f4(std::vector<Polynomial<Coef, Order>> G);
 
 template <class Coef>
 int SparseRow<Coef>::leadingColumn() const {

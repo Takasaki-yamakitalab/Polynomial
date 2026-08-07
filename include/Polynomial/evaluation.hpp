@@ -3,6 +3,7 @@
 
 #include "polynomial.hpp"
 #include <random>
+#include "polynomial_gcd.hpp"
 
 namespace polynomial {
 
@@ -47,7 +48,7 @@ bool evaluationIsGood(const Polynomial<Coef, Order>& f, const Polynomial<Coef, O
 
     auto d = differential(g, 0);
 
-    if (!polynomialGCD(g, d).isConstant()) return false;
+    if (!uniPolynomialGCD(g, d).isConstant()) return false;
 
     return true;
 }
