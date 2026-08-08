@@ -1,4 +1,4 @@
-﻿#include "Polynomial/debug_messager.hpp"
+﻿#include <vector>
 
 namespace polynomial {
 
@@ -27,8 +27,6 @@ void enumerateSubset(std::vector<std::vector<int>>& dst, const std::vector<bool>
         }
         return;
     }
-    DEBUG_OUT("need: ", need);
-    DEBUG_OUT("available: ", available);
     std::vector<int> cur;
     enumerateSubsetImpl(0, need, cur, dst, available, exclude);
     return;

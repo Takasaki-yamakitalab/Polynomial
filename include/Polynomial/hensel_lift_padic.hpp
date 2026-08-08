@@ -10,10 +10,7 @@ template <class Integer, class Order>
 void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
                      Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int64_t& pk, const int& p);
 template <class Integer, class Order>
-void henselPadic(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                 Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int& p, const int64_t& bound);
-template <class Integer, class Order>
-void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Order>& node, const int64_t& pk,
+void henselPadicTree(const Polynomial<Integer, Order>& target, FactorNode<Integer, Order>& node, const int64_t& pk,
                      const int& p);
 
 template <class Integer, class Order>
@@ -24,18 +21,52 @@ void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Or
     using Poly = Polynomial<Integer, Order>;
 
     // factor correction
+    auto fgh = f - g * h;
     Poly E = (f - g * h) / Integer(pk);
-    auto dg = divideMod(t * E, {g}, p).R;
-    auto dh = divideMod(s * E, {h}, p).R;
+    auto div = divideMod(t * E, {g}, pk);
+    Poly q = div.Q[0];
+    Poly dg = div.R;
+    auto dh = mod(s * E + h * q, pk);
+    // DEBUG
+    {
+        auto factorCorrection = mod(dg * h + g * dh - E, p);
+        DEBUG_OUT("factor correction residual (mod ", p, "): ", factorCorrection);
+        DEBUG_OUT("f - gh: ", fgh);
+        DEBUG_OUT("E: ", E);
+        DEBUG_OUT("f - gh - pk*E: ", fgh - Integer(pk) * E);
+        DEBUG_OUT("(f - gh - pk*E) mod p: ", mod(fgh - Integer(pk) * E, p));
+    }
     g += Integer(pk) * dg;
     h += Integer(pk) * dh;
+    g = mod(g, pk*pk);
+    h = mod(h, pk*pk);
+    // DEBUG
+    {
+        DEBUG_OUT("pk: ", pk);
+        DEBUG_OUT("p: ", p);
+        DEBUG_OUT("E: ", E);
+        DEBUG_OUT("t*E mod p: ", mod(t * E, p));
+        DEBUG_OUT("dg: ", dg);
+        DEBUG_OUT("q: ", q);
+        DEBUG_OUT("dh: ", dh);
+        DEBUG_OUT("linear correction residual: ", mod(dg * h + g * dh - E, pk));
+    }
 
     // Bézout correction
-    Poly C = (Poly(Monomial(f.leadingMonomial().size()), Integer(1)) - s * g - t * h) / Integer(pk);
-    auto ds = divideMod(t * C, {g}, p).R;
-    auto dt = divideMod(s * C, {h}, p).R;
+    Poly C = mod((Poly(Monomial(1), Integer(1)) - s * g - t * h) / Integer(pk), pk);
+    div = divideMod(t * C, {g}, pk);
+    q = div.Q[0];
+    auto dt = div.R;
+    auto ds = mod(s * C + h * q, pk);
+    // DEBUG
+    {
+        auto residual = mod(ds * g + dt * h - C, pk);
+        DEBUG_OUT("bezout correction residual (mod ", pk, "): ", residual);
+    }
     s += Integer(pk) * ds;
     t += Integer(pk) * dt;
+    s = mod(s, pk*pk);
+    t = mod(t, pk*pk);
 
     DEBUG_OUT("end of henselPadicStep()");
     DEBUG_OUT("deg(g): ", g.degree());
@@ -43,31 +74,22 @@ void henselPadicStep(const Polynomial<Integer, Order>& f, Polynomial<Integer, Or
 }
 
 template <class Integer, class Order>
-void henselPadic(const Polynomial<Integer, Order>& f, Polynomial<Integer, Order>& g, Polynomial<Integer, Order>& h,
-                 Polynomial<Integer, Order>& s, Polynomial<Integer, Order>& t, const int& p, const int64_t& bound) {
-    int64_t pk = p;
-    while (pk < bound) {
-        henselPadicStep(f, g, h, s, t, pk);
-        pk *= pk;
-    }
-}
-
-template <class Integer, class Order>
-void henselPadicTree(const Polynomial<Integer, Order>& f, FactorNode<Integer, Order>& node, const int64_t& pk,
+void henselPadicTree(const Polynomial<Integer, Order>& target, FactorNode<Integer, Order>& node, const int64_t& pk,
                      const int& p) {
     if (node.isLeaf()) return;
 
     auto& g = node.left->factor;
     auto& h = node.right->factor;
 
-    henselPadicStep(f, g, h, node.s, node.t, pk, p);
-    DEBUG_OUT("bezout (mod ", pk, "): ", modPolynomial(node.s * g + node.t * h, pk));
-    DEBUG_OUT("factor error (mod ", pk, "): ", modPolynomial(g * h, pk) - modPolynomial(f, pk));
+    DEBUG_OUT("pre-lift bezout (mod ", pk, "): ", modPolynomial(node.s * g + node.t * h, pk));
+    DEBUG_OUT("pre-lift factor error (mod ", pk, "): ", modPolynomial(g * h - target, pk));
+    henselPadicStep(target, g, h, node.s, node.t, pk, p);
+    DEBUG_OUT("post-lift bezout (mod ", pk * pk, "): ", modPolynomial(node.s * g + node.t * h, pk * pk));
+    DEBUG_OUT("post-lift factor error (mod ", pk * pk, "): ", modPolynomial(g * h - target, pk * pk));
+    node.factor = g * h;
 
     henselPadicTree(g, *node.left, pk, p);
     henselPadicTree(h, *node.right, pk, p);
-
-    node.factor = g * h;
 }
 }  // namespace polynomial
 

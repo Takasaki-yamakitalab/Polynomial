@@ -8,11 +8,9 @@
 namespace polynomial {
 
 struct ModContext {
-    inline static int P;
+    inline static int P = 2;
 
-    static int modulus() {
-        return P;
-    };
+    static int modulus() { return P; };
     static void setMod(int p) {
         assert(p > 1);
         P = p;
@@ -23,6 +21,14 @@ struct ModContext {
 class ModInt {
     int v;
     int P;
+
+   private:
+    template <class Integer>
+    ModInt(Integer value, int mod) : P(mod) {
+        int64_t x = value % P;
+        if (x < 0) x += P;
+        v = (int)x;
+    }
 
    public:
     void setMod(int p) {
@@ -60,15 +66,27 @@ class ModInt {
 
     ModInt operator-() const { return ModInt(-v); }
 
-    ModInt operator+(const ModInt& b) const { assert(P == b.P); return ModInt(v + b.v); }
-    ModInt operator-(const ModInt& b) const { assert(P == b.P); return ModInt(v - b.v); }
-    ModInt operator*(const ModInt& b) const { assert(P == b.P); return ModInt((int64_t)v * b.v); }
-    ModInt operator/(const ModInt& b) const { assert(P == b.P); return *this * b.inverse(); }
+    ModInt operator+(const ModInt& b) const {
+        assert(P == b.P);
+        return ModInt(v + b.v);
+    }
+    ModInt operator-(const ModInt& b) const {
+        assert(P == b.P);
+        return ModInt(v - b.v);
+    }
+    ModInt operator*(const ModInt& b) const {
+        assert(P == b.P);
+        return ModInt((int64_t)v * b.v);
+    }
+    ModInt operator/(const ModInt& b) const {
+        assert(P == b.P);
+        return *this * b.inverse();
+    }
 
-    friend ModInt operator+(const int& a, const ModInt& b) { return ModInt(a) + b; }
-    friend ModInt operator-(const int& a, const ModInt& b) { return ModInt(a) - b; }
-    friend ModInt operator*(const int& a, const ModInt& b) { return ModInt(a) * b; }
-    friend ModInt operator/(const int& a, const ModInt& b) { return ModInt(a) / b; }
+    friend ModInt operator+(const int& a, const ModInt& b) { return ModInt(a, b.P) + b; }
+    friend ModInt operator-(const int& a, const ModInt& b) { return ModInt(a, b.P) - b; }
+    friend ModInt operator*(const int& a, const ModInt& b) { return ModInt(a, b.P) * b; }
+    friend ModInt operator/(const int& a, const ModInt& b) { return ModInt(a, b.P) / b; }
 
     ModInt& operator+=(const ModInt& b) {
         *this = *this + b;
@@ -94,10 +112,10 @@ class ModInt {
     bool operator<=(const ModInt& b) const { return P == b.P && v <= b.v; }
     bool operator>=(const ModInt& b) const { return P == b.P && v >= b.v; }
 
-    friend bool operator==(const ModInt& a, const int& b) { return a == ModInt(b); }
-    friend bool operator==(const int& a, const ModInt& b) { return ModInt(a) == b; }
-    friend bool operator!=(const ModInt& a, const int& b) { return a != ModInt(b); }
-    friend bool operator!=(const int& a, const ModInt& b) { return ModInt(a) != b; }
+    friend bool operator==(const ModInt& a, const int& b) { return a.v == b; }
+    friend bool operator==(const int& a, const ModInt& b) { return a == b.v; }
+    friend bool operator!=(const ModInt& a, const int& b) { return a.v != b; }
+    friend bool operator!=(const int& a, const ModInt& b) { return a != b.v; }
 
     friend std::ostream& operator<<(std::ostream& os, const ModInt& a) { return os << a.v; }
 };

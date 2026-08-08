@@ -93,11 +93,9 @@ std::vector<Polynomial<Integer, Order>> kroneckerRecombine(const Polynomial<Inte
         for (auto& s : subsets) {
             if (s.empty()) continue;
 
-            DEBUG_OUT("s: ", s);
-
             Poly uf(Monomial(1), Integer(1));
             for (auto& i : s)
-                if (!is_used[i]) uf = uf * factors[i];  // <-ここ
+                if (!is_used[i]) uf = uf * factors[i];
             if (uf == Poly(Monomial(var_num), Integer(1))) continue;
 
             auto candidate = inverseKronecker(uf, B, var_num);

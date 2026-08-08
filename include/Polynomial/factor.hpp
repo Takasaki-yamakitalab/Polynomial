@@ -40,12 +40,8 @@ std::vector<SquareFreeFactor<Coef, Order>> squareFreeDecomposition(Polynomial<Co
     size_t var_num = f.leadingMonomial().size();
     DEBUG_OUT("squareFreeDecomposition(", f, ")");
 
-    DEBUG_OUT("call multiDerivativeGCD() from squareFreeDecomposition()");
     Poly g = multiDerivativeGCD(f);
-    DEBUG_OUT("return squareFreeDecomposition()");
-    DEBUG_OUT("call divide() from squareFreeDecomposition()");
     Poly w = divide(f, {g}).Q[0];
-    DEBUG_OUT("return squareFreeDecomposition()");
 
     uint64_t i = 1;
     while (!w.isConstant()) {
@@ -187,32 +183,35 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     }
 
     DEBUG_OUT("factorUniVar(", f, ")");
-    DEBUG_OUT("before findGoodPrime");
     int p = findGoodPrime(f);
-    DEBUG_OUT("p: ", p);
+    DEBUG_OUT("good prime p: ", p);
     Polynomial<ModInt, LexOrder> fp = modPolynomial(f, p);
-    DEBUG_OUT("fp: ", fp);
+    DEBUG_OUT("f (mod ", p, "): ", fp);
 
     // 有限体因数分解 (Berlekamp)
     std::mt19937 rng(std::random_device{}());
     DEBUG_OUT("call barlekampFactor() from factorUniVar()");
     std::vector<Polynomial<ModInt, LexOrder>> modFactors = berlekampFactor(fp, rng);
     DEBUG_OUT("return factorUniVar() from barlekampFactor()");
+    DEBUG_OUT("Result of berlekampFactor():");
+    for (auto& fact : modFactors) DEBUG_OUT("  ", fact);
 
     // Hensel lifting
-    DEBUG_OUT("call buildFactorTree() from factorUniVar()");
     auto root = buildFactorTree<Integer>(modFactors, 0, modFactors.size());
-    DEBUG_OUT("return factorUniVar() from buildFactorTree()");
-    DEBUG_OUT("s * left + t * right: ", modPolynomial(root->s * root->left->factor + root->t * root->right->factor, p));
     const int64_t bound = henselBound(f);
     int64_t pk = p;
-    int64_t last_pk = pk;
     while (pk < bound) {
         DEBUG_OUT("call henselPadicTree() from factorUniVar()");
-        last_pk = pk;
         henselPadicTree(f, *root, pk, p);
         DEBUG_OUT("return factorUniVar() from henselPadicTree()");
         pk *= pk;
+
+        // DEBUG
+        std::vector<Poly> leaves;
+        Poly product(Monomial(1), Integer(1));
+        collectLeaves(*root, leaves);
+        for (auto& leaf : leaves) product *= leaf;
+        DEBUG_OUT("tree leaf product error: ", modPolynomial(product - f, pk));
     }
     std::vector<Poly> lifted;
     DEBUG_OUT("call collectLeaves() from factorUniVar()");
@@ -225,12 +224,12 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
         for (auto& lift : lifted) product *= lift;
         DEBUG_OUT("lift product: ", product);
         DEBUG_OUT("original: ", f);
-        DEBUG_OUT("lift product - original (mod ", last_pk, "): ", modPolynomial(product - f, last_pk));
+        DEBUG_OUT("lift product - original (mod ", pk, "): ", modPolynomial(product - f, pk));
     }
 
     // Recombine (Zassenhaus method)
     DEBUG_OUT("call centerLiftAll() from factorUniVar()");
-    lifted = centerLiftAll(lifted, last_pk);
+    lifted = centerLiftAll(lifted, pk);
     DEBUG_OUT("return factorUniVar() from centerLiftAll()");
     DEBUG_OUT("lifted factors:");
     for (auto& g : lifted) DEBUG_OUT("  ", g);
@@ -263,7 +262,15 @@ std::vector<Polynomial<Integer, Order>> factorSquareFree(Polynomial<Integer, Ord
     DEBUG_OUT("g: ", univarPoly);
     DEBUG_OUT("Kronecker shift: ", kroneckerShift);
 
-    std::vector<Polynomial<Integer, LexOrder>> univarFactors = factorUniVar(univarPoly);
+    std::vector<Polynomial<Integer, LexOrder>> univarFactors;
+    auto sqfs = squareFreeDecomposition(univarPoly);
+    for (auto& sqf : sqfs) DEBUG_OUT("square-free: ", sqf.poly, " (", sqf.multiplicity, ")");
+    for (auto& sqf : sqfs) {
+        std::vector<Poly> facts = factorUniVar(sqf.poly);
+        for (int i = 0; i < sqf.multiplicity; i++) {
+            univarFactors.insert(univarFactors.end(), facts.begin(), facts.end());
+        }
+    }
     for (int i = 0; i < min_n; i++) {
         univarFactors.push_back(Poly(Monomial(1, 1), Integer(1)));
     }
@@ -288,6 +295,11 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
         cont *= Integer(-1);
         f *= Integer(-1);
     }
+    if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
+        f = pseudoDivide(f, cont).Q[0];
+        DEBUG_OUT("content: ", cont);
+        ans.push_back({cont, 1});
+    }
     // square-free decomposition
     auto sqfs = squareFreeDecomposition(f);
     for (auto& sqf : sqfs) DEBUG_OUT("square-free: ", sqf.poly, " (", sqf.multiplicity, ")");
@@ -304,11 +316,6 @@ std::vector<std::pair<Polynomial<Integer, Order>, int64_t>> factorize(Polynomial
             ans.push_back({h, sqf.multiplicity});
             DEBUG_OUT("factor: ", h);
         }
-    }
-    if (cont != Poly(Monomial(f.leadingMonomial().size()), Integer(1))) {
-        f = pseudoDivide(f, cont).Q[0];
-        DEBUG_OUT("content: ", cont);
-        ans.insert(ans.begin(), {cont, 1});
     }
     return ans;
 }

@@ -39,10 +39,33 @@ int main() {
     poly4.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 0, 0, 1}), 1);
     poly4.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 1, 1, 0}), 1);
     poly4.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 1, 0, 1}), 1);
-    // poly4.addTerm(polynomial::Monomial(1, 5), 1);
-    // poly4.addTerm(polynomial::Monomial(1, 4), 1);
-    // poly4.addTerm(polynomial::Monomial(1, 1), 1);
-    // poly4.addTerm(polynomial::Monomial(1, 0), 1);
+    polynomial::Polynomial<int> poly5;
+    poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{2, 1, 0}), 1);
+    poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{2, 0, 1}), -1);
+    poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 2, 1}), 1);
+    poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 2, 0}), -1);
+    poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 0, 2}), 1);
+    poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 1, 2}), -1);
+
+    // poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 0, 2}), 1);
+    // poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 1, 1}), -1);
+    // poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 0, 1}), -1);
+    // poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 1, 0}), 1);
+
+    // poly5.addTerm(polynomial::Monomial(1, 18), 1);
+    // poly5.addTerm(polynomial::Monomial(1, 12), -1);
+    // poly5.addTerm(polynomial::Monomial(1, 10), -1);
+    // poly5.addTerm(polynomial::Monomial(1, 4), 1);
+
+    // poly5.addTerm(polynomial::Monomial(1, 8), 1);
+    // poly5.addTerm(polynomial::Monomial(1, 7), -1);
+    // poly5.addTerm(polynomial::Monomial(1, 6), 2);
+    // poly5.addTerm(polynomial::Monomial(1, 5), -1);
+    // poly5.addTerm(polynomial::Monomial(1, 4), 1);
+    // poly5.addTerm(polynomial::Monomial(1, 3), -1);
+    // poly5.addTerm(polynomial::Monomial(1, 2), 1);
+    // poly5.addTerm(polynomial::Monomial(1, 1), -1);
+    // poly5.addTerm(polynomial::Monomial(1, 0), 1);
 
     std::cout << "TEST 1" << std::endl;
     auto ans1 = polynomial::factorize(poly1);
@@ -81,6 +104,16 @@ int main() {
     for (size_t i = 0; i < ans4.size(); i++) {
         std::cout << "(" << ans4[i].first << ")^(" << ans4[i].second << ")";
         if (i + 1 < ans4.size()) std::cout << "*";
+    }
+    std::cout << std::endl;
+
+    std::cout << "TEST 5" << std::endl;
+    auto ans5 = polynomial::factorize(poly5);
+    std::cout << "ORIGIN: " << poly5 << std::endl;
+    std::cout << "FACTORIZED: ";
+    for (size_t i = 0; i < ans5.size(); i++) {
+        std::cout << "(" << ans5[i].first << ")^(" << ans5[i].second << ")";
+        if (i + 1 < ans5.size()) std::cout << "*";
     }
     std::cout << std::endl;
     return 0;

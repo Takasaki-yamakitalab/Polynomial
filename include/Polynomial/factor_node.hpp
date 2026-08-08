@@ -2,13 +2,13 @@
 #define POLYNOMIAL_FACTOR_NODE_HPP
 
 #include "polynomial.hpp"
-#include "debug_messager.hpp"
 
 namespace polynomial {
 
 template <class Coef, class Order>
 struct FactorNode {
     Polynomial<Coef, Order> factor;
+    Polynomial<Coef, Order> target;
     std::unique_ptr<FactorNode> left;
     std::unique_ptr<FactorNode> right;
     Polynomial<Coef, Order> s;
@@ -40,7 +40,6 @@ std::unique_ptr<FactorNode<Coef, Order>> makeLeaf(const Polynomial<Coef, Order>&
 template <class Coef, class Order>
 std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polynomial<Coef, Order>>& factors,
                                                          size_t begin, size_t end) {
-    DEBUG_OUT("buildFactorTree(", begin, ", ", end, ")");
     if (begin >= end) {
         throw std::logic_error("buildFactorTree: empty range");
     }
@@ -54,11 +53,8 @@ std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polyn
     size_t mid = (begin + end) / 2;
     node->left = buildFactorTree(factors, begin, mid);
     node->right = buildFactorTree(factors, mid, end);
-    DEBUG_OUT("before multiply");
     node->factor = node->left->factor * node->right->factor;
-    DEBUG_OUT("before extendedEuclid");
     auto ee = extendedEuclid(node->left->factor, node->right->factor);
-    DEBUG_OUT("after extendedEuclid");
     node->s = ee.s;
     node->t = ee.t;
     return node;
@@ -66,7 +62,6 @@ std::unique_ptr<FactorNode<Coef, Order>> buildFactorTree(const std::vector<Polyn
 template <class Integer, class Order>
 std::unique_ptr<FactorNode<Integer, Order>> buildFactorTree(const std::vector<Polynomial<ModInt, Order>>& factors,
                                                             size_t begin, size_t end) {
-    DEBUG_OUT("buildFactorTree(", begin, ", ", end, ")");
     if (begin >= end) {
         throw std::logic_error("buildFactorTree: empty range");
     }
@@ -78,6 +73,7 @@ std::unique_ptr<FactorNode<Integer, Order>> buildFactorTree(const std::vector<Po
         for (auto it = factors[begin].terms.begin(); it != factors[begin].terms.end(); it++) {
             node->factor.addTerm(it->first, it->second.value());
         }
+        node->target = node->factor;
         return node;
     }
     size_t mid = (begin + end + 1) / 2;
@@ -85,6 +81,7 @@ std::unique_ptr<FactorNode<Integer, Order>> buildFactorTree(const std::vector<Po
     node->left = buildFactorTree<Integer, Order>(factors, begin, mid);
     node->right = buildFactorTree<Integer, Order>(factors, mid, end);
     node->factor = node->left->factor * node->right->factor;
+    node->target = node->factor;
     auto ee = extendedEuclidMod(node->left->factor, node->right->factor, p);
     node->s = ee.s;
     node->t = ee.t;

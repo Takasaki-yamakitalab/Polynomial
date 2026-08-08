@@ -65,6 +65,10 @@ struct Polynomial {
     Polynomial operator-() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Polynomial<Coef, Order>& f) {
+        if (f.isZero()) {
+            os << "0";
+            return os;
+        }
         for (auto it = f.terms.begin(); it != f.terms.end();) {
             os << it->second << "*" << it->first;
             if (++it != f.terms.end()) os << "+";
@@ -115,6 +119,8 @@ DivisionResult<Coef, Order> divide(Polynomial<Coef, Order> f, const std::vector<
 template <class Integer, class Order>
 DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G,
                                          const int p);
+template <class Integer, class Order>
+Polynomial<Integer, Order> mod(const Polynomial<Integer, Order>& f, const int p);
 template <class Coef, class Order>
 Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p);
 template <class Integer, class Order>
@@ -518,6 +524,17 @@ DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std
 
     return {Q, R};
 }
+template <class Integer, class Order>
+Polynomial<Integer, Order> mod(const Polynomial<Integer, Order>& f, const int p) {
+    int mod = ModContext::modulus();
+    Polynomial<ModInt, Order> fp = modPolynomial(f, p);
+    Polynomial<Integer, Order> ret;
+    for (auto it = fp.terms.begin(); it != fp.terms.end(); it++) {
+        ret.addTerm(it->first, it->second.value());
+    }
+    ModContext::setMod(mod);
+    return ret;
+}
 
 template <class Coef, class Order>
 static Polynomial<Coef, Order> primitivePartImpl(Polynomial<Coef, Order> p, std::true_type) {
@@ -555,7 +572,6 @@ DivisionResult<Integer, Order> pseudoDivide(Polynomial<Integer, Order> f, const 
     using Poly = Polynomial<Integer, Order>;
     DivisionResult<Integer, Order> ret;
     assert(!g.isZero());
-    DEBUG_OUT("pseudoDivide(", f, ", ", g, ")");
 
     Poly R = f;
     Poly Q;

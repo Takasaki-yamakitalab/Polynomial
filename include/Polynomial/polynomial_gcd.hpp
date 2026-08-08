@@ -13,7 +13,7 @@
 namespace polynomial {
 
 template <class Order>
-int findGoodPrime(const Polynomial<int, Order>& f);
+int findGoodPrime(const Polynomial<int, Order>& f, const std::vector<int64_t>& exclude = {});
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> uniPolynomialGCD(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
@@ -35,12 +35,15 @@ template <class Coef, class Order>
 Polynomial<Coef, Order> multiDerivativeGCD(const Polynomial<Coef, Order>& f);
 
 template <class Order>
-int findGoodPrime(const Polynomial<int, Order>& f) {
+int findGoodPrime(const Polynomial<int, Order>& f, const std::vector<int64_t>& exclude) {
     static const int primes[] = {2,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,
                                  53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103, 107, 109, 113,
                                  127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 199};
 
+    DEBUG_OUT("findGoodPrime(", f, ")");
     for (int p : primes) {
+        for (auto& ex : exclude) if (p == ex) continue;
+
         auto fp = modPolynomial(f, p);
 
         // 次数が落ちる素数は除外
@@ -49,10 +52,12 @@ int findGoodPrime(const Polynomial<int, Order>& f) {
         auto df = derivativeMod(f, p);
 
         DEBUG_OUT("p: ", p);
-        DEBUG_OUT("fp: ", fp);
-        DEBUG_OUT("df: ", df);
+        DEBUG_OUT("f (mod ", p, "): ", fp);
+        DEBUG_OUT("df (mod ", p, "): ", df);
         auto g = uniPolynomialGCD(fp, df);
         DEBUG_OUT("gcd: ", g);
+        DEBUG_OUT("TEST: fp/gcd: ", divide(fp, {g}).Q[0]);
+        DEBUG_OUT("TEST: df/gcd: ", divide(df, {g}).Q[0]);
 
         // square-free
         if (g.isConstant()) return p;
@@ -82,7 +87,6 @@ static Polynomial<Coef, Order> uniPolyGCDImpl(Polynomial<Coef, Order> f, Polynom
     Coef c = coefficientGCD(content(f), content(g));
     while (!g.isZero()) {
         Poly r = pseudoRemainder(f, g);
-        DEBUG_OUT("r: ", r);
         r = primitivePart(r);
         f = g;
         g = r;
@@ -114,7 +118,6 @@ Polynomial<Coef, Order> polynomialGCDKronecker(const Polynomial<Coef, Order>& f,
 template <class Order>
 Polynomial<ModInt, Order> polyModGCDImpl(const Polynomial<ModInt, Order>& f, const Polynomial<ModInt, Order>& g,
                                          const size_t& var_num, const size_t& orig_var_num) {
-    DEBUG_OUT("polyModGCDImpl(", f, ", ", g, ", ", var_num, ", ", orig_var_num, ")");
     using Poly = Polynomial<ModInt, Order>;
     if (var_num == 1) return uniPolynomialGCD(f, g);
     const size_t var = var_num - 1;
@@ -123,14 +126,12 @@ Polynomial<ModInt, Order> polyModGCDImpl(const Polynomial<ModInt, Order>& f, con
     std::vector<Poly> H;
     int64_t best_deg = std::numeric_limits<int64_t>::max();
     for (int a = 0; a < P; a++) {
-        DEBUG_OUT("a: ", a);
         Poly F = substitute(f, var, ModInt(a));
         Poly G = substitute(g, var, ModInt(a));
         bool bad_eval = false;
         for (size_t i = 0; i < var; i++) {
             if (F.degree(i) < f.degree(i) || G.degree(i) < g.degree(i)) {
                 bad_eval = true;
-                DEBUG_OUT("polyModGCDImpl(): Bad prime! (", a, ")");
                 break;
             }
         }
@@ -151,7 +152,6 @@ Polynomial<ModInt, Order> polyModGCDImpl(const Polynomial<ModInt, Order>& f, con
         H.push_back(h);
         if ((int64_t)H.size() < std::min(f.degree(var), g.degree(var)) + 1) continue;
         // H からラグランジュ補間
-        DEBUG_OUT("Lagrange interpolation");
         Poly gcd;
         Monomial y(orig_var_num);
         y.set_exp(var, 1);
@@ -193,7 +193,6 @@ Polynomial<Coef, Order> polynomialGCD(const Polynomial<Coef, Order>& f, const Po
     if (var_num == 1) return uniPolynomialGCD(f, g);
     if (f.isOne()) return f;
     if (g.isOne()) return g;
-    DEBUG_OUT("polynomialGCD(", f, ", ", g, ", ", var_num, ")");
     using Poly = Polynomial<Coef, Order>;
     using ModPoly = Polynomial<ModInt, Order>;
 
@@ -209,13 +208,11 @@ Polynomial<Coef, Order> polynomialGCD(const Polynomial<Coef, Order>& f, const Po
     Poly gcd;
     int64_t pp = 1;
     for (int p : primes) {
-        DEBUG_OUT("p: ", p);
         ModPoly fp = modPolynomial(f, p);
         ModPoly gp = modPolynomial(g, p);
         bool restart = false;
         for (int i = 0; i < var_num; i++) {
             if (fp.degree(i) < f.degree(i) || gp.degree(i) < g.degree(i)) {
-                DEBUG_OUT("Bad prime! (", p, ")");
                 restart = true;
                 break;
             }
@@ -260,7 +257,7 @@ Polynomial<Coef, Order> polynomialGCD(const std::vector<Polynomial<Coef, Order>>
         // gcd = polynomialGCDKronecker(gcd, f, var_num);
         gcd = polynomialGCD(gcd, f, var_num);
     }
-    DEBUG_OUT("calc GCD of");
+    DEBUG_OUT("Calculate GCD of:");
     for (auto& f : F) DEBUG_OUT("  ", f);
     DEBUG_OUT("result: ", gcd);
     return gcd;
@@ -268,8 +265,8 @@ Polynomial<Coef, Order> polynomialGCD(const std::vector<Polynomial<Coef, Order>>
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> multiDerivativeGCD(const Polynomial<Coef, Order>& f) {
-    using Poly = Polynomial<Coef, Order>;
     DEBUG_OUT("multiDerivativeGCD(", f, ")");
+    using Poly = Polynomial<Coef, Order>;
     std::vector<Poly> F = {f};
     size_t var_num = (int)f.leadingMonomial().size();
     for (int i = 0; i < var_num; i++) {
@@ -278,8 +275,6 @@ Polynomial<Coef, Order> multiDerivativeGCD(const Polynomial<Coef, Order>& f) {
         F.push_back(df);
     }
     Poly gcd = polynomialGCD(F, var_num);
-    for (auto& df : F) DEBUG_OUT("derivative: ", df);
-    DEBUG_OUT("gcd: ", gcd);
     return gcd;
 }
 
