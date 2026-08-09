@@ -118,9 +118,9 @@ template <class Coef, class Order>
 DivisionResult<Coef, Order> divide(Polynomial<Coef, Order> f, const std::vector<Polynomial<Coef, Order>>& G);
 template <class Integer, class Order>
 DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G,
-                                         const int p);
+                                         const int64_t p);
 template <class Integer, class Order>
-Polynomial<Integer, Order> mod(const Polynomial<Integer, Order>& f, const int p);
+Polynomial<Integer, Order> mod(const Polynomial<Integer, Order>& f, const int64_t p);
 template <class Coef, class Order>
 Polynomial<Coef, Order> primitivePart(Polynomial<Coef, Order> p);
 template <class Integer, class Order>
@@ -164,7 +164,7 @@ DivisionResult<Coef, Order> divideByLinearFactor(const Polynomial<Coef, Order>& 
 template <class Coef, class Order>
 ExtendEuclidResult<Coef, Order> extendedEuclid(Polynomial<Coef, Order> f, Polynomial<Coef, Order> g);
 template <class Integer, class Order>
-ExtendEuclidResult<Integer, Order> extendedEuclidMod(Polynomial<Integer, Order> f, Polynomial<Integer, Order> g, int p);
+ExtendEuclidResult<Integer, Order> extendedEuclidMod(Polynomial<Integer, Order> f, Polynomial<Integer, Order> g, int64_t p);
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> product(const std::vector<Polynomial<Coef, Order>>& factors);
@@ -185,11 +185,11 @@ template <class Integer, class Order>
 Polynomial<Integer, Order> contentMultiVar(const Polynomial<Integer, Order>& f, size_t var);
 
 template <class Coef, class Order>
-Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p);
+Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int64_t p);
 template <class Order>
-Polynomial<ModInt, Order> modPolynomial(const Polynomial<ModInt, Order>& f, int p);
-template <class Order>
-Polynomial<ModInt, Order> derivativeMod(const Polynomial<int, Order>& f, int p);
+Polynomial<ModInt, Order> modPolynomial(const Polynomial<ModInt, Order>& f, int64_t p);
+template <class Integer, class Order>
+Polynomial<ModInt, Order> derivativeMod(const Polynomial<Integer, Order>& f, int64_t p);
 template <class Order>
 Polynomial<ModInt, Order> powModPolynomial(Polynomial<ModInt, Order> a, int64_t n,
                                            const Polynomial<ModInt, Order>& mod);
@@ -497,11 +497,11 @@ DivisionResult<Coef, Order> divide(Polynomial<Coef, Order> f, const std::vector<
 }
 template <class Integer, class Order>
 DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std::vector<Polynomial<Integer, Order>>& G,
-                                         const int p) {
+                                         const int64_t p) {
     std::vector<Polynomial<Integer, Order>> Q;
     Polynomial<Integer, Order> R;
 
-    int mod = ModContext::modulus();
+    int64_t mod = ModContext::modulus();
     Polynomial<ModInt, Order> fp = modPolynomial(f, p);
     std::vector<Polynomial<ModInt, Order>> Gp;
     for (auto& g : G) {
@@ -512,12 +512,12 @@ DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std
     for (auto& q : result.Q) {
         Polynomial<Integer, Order> poly;
         for (auto it = q.terms.begin(); it != q.terms.end(); it++) {
-            poly.addTerm(it->first, it->second.value());
+            poly.addTerm(it->first, Integer(it->second.value()));
         }
         Q.push_back(poly);
     }
     for (auto it = result.R.terms.begin(); it != result.R.terms.end(); it++) {
-        R.addTerm(it->first, it->second.value());
+        R.addTerm(it->first, Integer(it->second.value()));
     }
 
     ModContext::setMod(mod);
@@ -525,12 +525,12 @@ DivisionResult<Integer, Order> divideMod(Polynomial<Integer, Order> f, const std
     return {Q, R};
 }
 template <class Integer, class Order>
-Polynomial<Integer, Order> mod(const Polynomial<Integer, Order>& f, const int p) {
-    int mod = ModContext::modulus();
+Polynomial<Integer, Order> mod(const Polynomial<Integer, Order>& f, const int64_t p) {
+    int64_t mod = ModContext::modulus();
     Polynomial<ModInt, Order> fp = modPolynomial(f, p);
     Polynomial<Integer, Order> ret;
     for (auto it = fp.terms.begin(); it != fp.terms.end(); it++) {
-        ret.addTerm(it->first, it->second.value());
+        ret.addTerm(it->first, Integer(it->second.value()));
     }
     ModContext::setMod(mod);
     return ret;
@@ -880,7 +880,7 @@ ExtendEuclidResult<Coef, Order> extendedEuclid(Polynomial<Coef, Order> f, Polyno
 }
 template <class Integer, class Order>
 ExtendEuclidResult<Integer, Order> extendedEuclidMod(Polynomial<Integer, Order> f, Polynomial<Integer, Order> g,
-                                                     int p) {
+                                                     int64_t p) {
     using Poly = Polynomial<Integer, Order>;
     Polynomial<ModInt, Order> fp = modPolynomial(f, p);
     Polynomial<ModInt, Order> gp = modPolynomial(g, p);
@@ -1010,7 +1010,7 @@ Polynomial<Integer, Order> contentMultiVar(const Polynomial<Integer, Order>& f, 
 }
 
 template <class Coef, class Order>
-Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p) {
+Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int64_t p) {
     ModContext::setMod(p);
     Polynomial<ModInt, Order> ret;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
@@ -1020,7 +1020,7 @@ Polynomial<ModInt, Order> modPolynomial(const Polynomial<Coef, Order>& f, int p)
     return ret;
 }
 template <class Order>
-Polynomial<ModInt, Order> modPolynomial(const Polynomial<ModInt, Order>& f, int p) {
+Polynomial<ModInt, Order> modPolynomial(const Polynomial<ModInt, Order>& f, int64_t p) {
     ModContext::setMod(p);
     Polynomial<ModInt, Order> ret;
     for (auto it = f.terms.begin(); it != f.terms.end(); it++) {
@@ -1029,8 +1029,8 @@ Polynomial<ModInt, Order> modPolynomial(const Polynomial<ModInt, Order>& f, int 
     }
     return ret;
 }
-template <class Order>
-Polynomial<ModInt, Order> derivativeMod(const Polynomial<int, Order>& f, int p) {
+template <class Integer, class Order>
+Polynomial<ModInt, Order> derivativeMod(const Polynomial<Integer, Order>& f, int64_t p) {
     auto df = differential(f, 0);
     return modPolynomial(df, p);
 }
@@ -1054,7 +1054,7 @@ template <class Order>
 Polynomial<ModInt, Order> frobenius(const Polynomial<ModInt, Order>& g, const Polynomial<ModInt, Order>& f) {
     // only for univariate polynomials
     Polynomial<ModInt, Order> h;
-    int p = ModContext::modulus();
+    int64_t p = ModContext::modulus();
     for (auto it = g.terms.begin(); it != g.terms.end(); it++) {
         Monomial m = it->first;
         m.set_exp(0, m.exp(0) * p);

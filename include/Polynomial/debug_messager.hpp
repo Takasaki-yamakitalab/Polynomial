@@ -9,14 +9,14 @@
 #include <sstream>
 #endif
 
-#ifdef _DEBUG
+// #ifdef _DEBUG
 #define DEBUG_OUT(...)                                   \
     do {                                                 \
         debug_messager::debug_print_helper(__VA_ARGS__); \
     } while (0)
-#else
-#define DEBUG_OUT(...)
-#endif
+// #else
+// #define DEBUG_OUT(...)
+// #endif
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
@@ -51,9 +51,13 @@ void debug_print_helper(Args&&... args) {
 
 template <typename... Args>
 void debug_print_helper(Args&&... args) {
+#ifdef _DEBUG
     std::cout << "[DEBUG] ";
     ((std::cout << std::forward<Args>(args)), ...);
     std::cout << std::endl;
+#else
+    (((void)std::forward<Args>(args)), ...);
+#endif
 }
 
 #endif

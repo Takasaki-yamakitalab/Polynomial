@@ -39,7 +39,7 @@ int main() {
     poly4.addTerm(polynomial::Monomial(std::vector<int64_t>{1, 0, 0, 1}), 1);
     poly4.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 1, 1, 0}), 1);
     poly4.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 1, 0, 1}), 1);
-    polynomial::Polynomial<int> poly5;
+    polynomial::Polynomial<int64_t> poly5;
     poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{2, 1, 0}), 1);
     poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{2, 0, 1}), -1);
     poly5.addTerm(polynomial::Monomial(std::vector<int64_t>{0, 2, 1}), 1);

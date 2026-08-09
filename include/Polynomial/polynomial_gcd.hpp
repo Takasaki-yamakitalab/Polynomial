@@ -12,8 +12,8 @@
 
 namespace polynomial {
 
-template <class Order>
-int findGoodPrime(const Polynomial<int, Order>& f, const std::vector<int64_t>& exclude = {});
+template <class Integer, class Order>
+Integer findGoodPrime(const Polynomial<Integer, Order>& f, const std::vector<Integer>& exclude = {});
 
 template <class Coef, class Order>
 Polynomial<Coef, Order> uniPolynomialGCD(const Polynomial<Coef, Order>& f, const Polynomial<Coef, Order>& g);
@@ -34,15 +34,16 @@ Polynomial<Coef, Order> polynomialGCD(const std::vector<Polynomial<Coef, Order>>
 template <class Coef, class Order>
 Polynomial<Coef, Order> multiDerivativeGCD(const Polynomial<Coef, Order>& f);
 
-template <class Order>
-int findGoodPrime(const Polynomial<int, Order>& f, const std::vector<int64_t>& exclude) {
-    static const int primes[] = {2,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,
-                                 53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103, 107, 109, 113,
-                                 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 199};
+template <class Integer, class Order>
+Integer findGoodPrime(const Polynomial<Integer, Order>& f, const std::vector<Integer>& exclude) {
+    const Integer primes[] = {2,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,  47,
+                              53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103, 107, 109, 113,
+                              127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 199};
 
     DEBUG_OUT("findGoodPrime(", f, ")");
-    for (int p : primes) {
-        for (auto& ex : exclude) if (p == ex) continue;
+    for (Integer p : primes) {
+        for (auto& ex : exclude)
+            if (p == ex) continue;
 
         auto fp = modPolynomial(f, p);
 
@@ -121,7 +122,7 @@ Polynomial<ModInt, Order> polyModGCDImpl(const Polynomial<ModInt, Order>& f, con
     using Poly = Polynomial<ModInt, Order>;
     if (var_num == 1) return uniPolynomialGCD(f, g);
     const size_t var = var_num - 1;
-    const int P = ModContext::modulus();
+    const int64_t P = ModContext::modulus();
     std::vector<ModInt> Alpha;
     std::vector<Poly> H;
     int64_t best_deg = std::numeric_limits<int64_t>::max();
@@ -157,8 +158,8 @@ Polynomial<ModInt, Order> polyModGCDImpl(const Polynomial<ModInt, Order>& f, con
         y.set_exp(var, 1);
         for (int64_t x_deg = 0; x_deg <= best_deg; x_deg++) {
             std::vector<Poly> coeff;
-            for (auto& h : H) {
-                coeff.push_back(h.coeffPoly(0, x_deg));
+            for (auto& hh : H) {
+                coeff.push_back(hh.coeffPoly(0, x_deg));
             }
             // (x, y) = (Alpha[j], coeff[j]) をラグランジュ補間
             Poly c;
@@ -196,7 +197,7 @@ Polynomial<Coef, Order> polynomialGCD(const Polynomial<Coef, Order>& f, const Po
     using Poly = Polynomial<Coef, Order>;
     using ModPoly = Polynomial<ModInt, Order>;
 
-    const int default_P = ModContext::modulus();
+    const int64_t default_P = ModContext::modulus();
 
     // https://mathlandscape.com/prime-table/
     static const int primes[] = {7927, 7933, 7937, 7949, 7951, 7963, 7993, 8009, 8011, 8017,

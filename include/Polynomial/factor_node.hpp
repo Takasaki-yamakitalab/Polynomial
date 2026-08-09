@@ -71,13 +71,13 @@ std::unique_ptr<FactorNode<Integer, Order>> buildFactorTree(const std::vector<Po
     if (end - begin == 1) {
         node->factor.clear();
         for (auto it = factors[begin].terms.begin(); it != factors[begin].terms.end(); it++) {
-            node->factor.addTerm(it->first, it->second.value());
+            node->factor.addTerm(it->first, Integer(it->second.value()));
         }
         node->target = node->factor;
         return node;
     }
     size_t mid = (begin + end + 1) / 2;
-    int p = factors[0].leadingCoefficient().modulus();
+    int64_t p = factors[0].leadingCoefficient().modulus();
     node->left = buildFactorTree<Integer, Order>(factors, begin, mid);
     node->right = buildFactorTree<Integer, Order>(factors, mid, end);
     node->factor = node->left->factor * node->right->factor;

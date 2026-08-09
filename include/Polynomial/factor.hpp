@@ -65,28 +65,26 @@ std::vector<SquareFreeFactor<Coef, Order>> squareFreeDecomposition(Polynomial<Co
 }
 template <class Order>
 std::vector<std::vector<ModInt>> berlekampMatrix(const Polynomial<ModInt, Order>& f) {
-    int64_t n = f.degree(0);
+    int64_t deg = f.degree(0);
+    if (deg <= 0) return {};
+    size_t n = (size_t)deg;
 
     std::vector<std::vector<ModInt>> Q(n, std::vector<ModInt>(n));
 
-    for (int j = 0; j < n; j++) {
+    for (size_t j = 0; j < n; j++) {
         Polynomial<ModInt, Order> g(Monomial(1, j), ModInt(1));
         g = frobenius(g, f);
         for (auto it = g.terms.begin(); it != g.terms.end(); it++) {
-            int i = (int)it->first.exp(0);
+            size_t i = it->first.exp(0);
             Q[i][j] = it->second;
         }
     }
 
     // Q-I
-    for (int i = 0; i < n; i++) {
-        Q[i][i] -= 1;
-    }
+    for (size_t i = 0; i < n; i++) Q[i][i] -= 1;
 
     DEBUG_OUT("Q-I:");
-    for (int i = 0; i < n; ++i) {
-        DEBUG_OUT("  ", Q[i]);
-    }
+    for (size_t i = 0; i < n; i++) DEBUG_OUT("  ", Q[i]);
 
     return Q;
 }
@@ -110,10 +108,10 @@ template <class Order, class RNG>
 Polynomial<ModInt, Order> randomBerlekampPolynomial(const std::vector<Polynomial<ModInt, Order>>& basis, RNG& rng) {
     using Poly = Polynomial<ModInt, Order>;
     Poly h;
-    int p = ModContext::modulus();
-    std::uniform_int_distribution<int> dist(0, p - 1);
+    int64_t p = ModContext::modulus();
+    std::uniform_int_distribution<int64_t> dist(0, p - 1);
     for (size_t i = 1; i < basis.size(); i++) {
-        int c = dist(rng);
+        int64_t c = dist(rng);
         if (c == 0) continue;
         h += basis[i] * ModInt(c);
     }
@@ -183,7 +181,7 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
     }
 
     DEBUG_OUT("factorUniVar(", f, ")");
-    int p = findGoodPrime(f);
+    int64_t p = findGoodPrime(f);
     DEBUG_OUT("good prime p: ", p);
     Polynomial<ModInt, LexOrder> fp = modPolynomial(f, p);
     DEBUG_OUT("f (mod ", p, "): ", fp);
@@ -205,13 +203,6 @@ std::vector<Polynomial<Integer, LexOrder>> factorUniVar(Polynomial<Integer, LexO
         henselPadicTree(f, *root, pk, p);
         DEBUG_OUT("return factorUniVar() from henselPadicTree()");
         pk *= pk;
-
-        // DEBUG
-        std::vector<Poly> leaves;
-        Poly product(Monomial(1), Integer(1));
-        collectLeaves(*root, leaves);
-        for (auto& leaf : leaves) product *= leaf;
-        DEBUG_OUT("tree leaf product error: ", modPolynomial(product - f, pk));
     }
     std::vector<Poly> lifted;
     DEBUG_OUT("call collectLeaves() from factorUniVar()");
