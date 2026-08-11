@@ -9,14 +9,10 @@
 #include <sstream>
 #endif
 
-// #ifdef _DEBUG
 #define DEBUG_OUT(...)                                   \
     do {                                                 \
         debug_messager::debug_print_helper(__VA_ARGS__); \
     } while (0)
-// #else
-// #define DEBUG_OUT(...)
-// #endif
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
@@ -40,11 +36,15 @@ void debug_print_helper(Args&&... args);
 
 template <typename... Args>
 void debug_print_helper(Args&&... args) {
+#ifdef _DEBUG
     std::ostringstream oss;
     oss << "[DEBUG] ";
     ((oss << std::forward<Args>(args)), ...);
     oss << std::endl;
     __android_log_print(ANDROID_LOG_INFO, "DEBUG_OUT", "%s", oss.str().c_str());
+#else
+    (((void)std::forward<Args>(args)), ...);
+#endif
 }
 
 #else

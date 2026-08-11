@@ -1,7 +1,9 @@
 ﻿#ifndef POLYNOMIAL_COEFFICIENT_HPP
 #define POLYNOMIAL_COEFFICIENT_HPP
 
+#include <type_traits>
 #include <vector>
+#include "coefficient_traits.hpp"
 
 namespace polynomial {
 
@@ -14,6 +16,8 @@ int64_t permutation(const int64_t& n, const int64_t& r);
 int64_t combination(const int64_t& n, const int64_t& r);
 
 template <class Coef>
+Coef mod(Coef a, Coef r);
+template <class Coef>
 Coef pow(Coef c, int64_t n);
 
 // ===================================================
@@ -23,7 +27,7 @@ Coef coefficientGCD(Coef a, Coef b) {
     a = abs(a);
     b = abs(b);
     while (b != Coef(0)) {
-        Coef r = Coef(fmod(a, b));
+        Coef r = mod(a, b);
         a = b;
         b = r;
     }
@@ -37,6 +41,18 @@ Coef content(const std::vector<Coef>& c) {
         g = coefficientGCD(g, abs(c[i]));
     }
     return g;
+}
+template <class Integer>
+Integer modImpl(Integer a, Integer r, std::false_type) {
+    return a % r;
+}
+template <class Coef>
+Coef modImpl(Coef a, Coef r, std::true_type) {
+    return fmod(a, r);
+}
+template <class Coef>
+Coef mod(Coef a, Coef r) {
+    return modImpl(a, r, std::integral_constant<bool, coefficient_traits<Coef>::is_field>());
 }
 template <class Coef>
 Coef pow(Coef c, int64_t n) {
